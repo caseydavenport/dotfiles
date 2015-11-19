@@ -91,7 +91,7 @@ set tw=120
 augroup vimrc_autocmds
 	" Highlight long lines for python files.
 	autocmd BufEnter *.py highlight OverLength ctermbg=white ctermfg=darkred guibg=#111111
-	autocmd BufEnter *.py match OverLength /\%100v.\+/
+	autocmd BufEnter *.py match OverLength /\%80v.\+/
 
 	" Delete trailing whitespace on python files.
     " autocmd BufWrite *.py :call DeleteTrailingWS()
