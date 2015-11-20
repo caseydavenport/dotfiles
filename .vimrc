@@ -16,10 +16,10 @@ inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 " Set 7 lines to the cursor - when moving vertically using j/k
 set so=7
 
-" Use wild menu
+" Use wildmenu for command completion.
 set wildmenu
 
-" Ignore compiled files
+" Ignore compiled files in wildmenu.
 set wildignore=*.o,*~,*.pyc
 
 " Ignore case when searching
@@ -96,3 +96,8 @@ augroup vimrc_autocmds
 	" Delete trailing whitespace on python files.
     " autocmd BufWrite *.py :call DeleteTrailingWS()
 augroup END
+
+" Execute Pathogen plugins
+execute pathogen#infect()
+syntax on
+filetype plugin indent on
