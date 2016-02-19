@@ -85,8 +85,8 @@ set t_vb=
 set tm=50
 
 " Linebreak on 120 characters
-set lbr
-set tw=120
+" set lbr
+" set tw=120
 
 augroup vimrc_autocmds
 	" Highlight long lines for python files.
@@ -94,7 +94,7 @@ augroup vimrc_autocmds
 	autocmd BufEnter *.py match OverLength /\%80v.\+/
 
 	" Delete trailing whitespace on python files.
-    " autocmd BufWrite *.py :call DeleteTrailingWS()
+        " autocmd BufWrite *.py :call DeleteTrailingWS()
 augroup END
 
 " Execute Pathogen plugins

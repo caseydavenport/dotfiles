@@ -31,6 +31,7 @@ git-config:
 	git config --global core.editor vim
 	git config --global user.name "Casey Davenport"
 	git config --global user.email "davenport.cas@gmail.com"
+	git config --global color.ui true
 
 # Remove YouCompleteMe.
 clean-ycm:
