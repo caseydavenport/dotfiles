@@ -12,6 +12,7 @@ set completeopt=longest,menuone
 
 " Set enter key as select popup item
 inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"                                                                                                                         
+set backspace=indent,eol,start
 
 " Set 7 lines to the cursor - when moving vertically using j/k
 set so=7
