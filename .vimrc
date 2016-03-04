@@ -95,7 +95,7 @@ augroup vimrc_autocmds
 	autocmd BufEnter *.py match OverLength /\%80v.\+/
 
 	" Delete trailing whitespace on python files.
-        " autocmd BufWrite *.py :call DeleteTrailingWS()
+        autocmd BufWrite *.py :call DeleteTrailingWS()
 augroup END
 
 " Execute Pathogen plugins
