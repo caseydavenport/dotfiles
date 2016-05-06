@@ -19,17 +19,17 @@ pathogen:
 
 # Install the vim golang plugin.
 go-plugin: pathogen
-	if [! -e ~/.vim/bundle/vim-go]; then
-		mkdir -p ~/.vim/bundle
-		git clone https://github.com/fatih/vim-go.git ~/.vim/bundle/vim-go
+	if [ ! -e ~/.vim/bundle/vim-go ]; then \
+		mkdir -p ~/.vim/bundle; \
+		git clone https://github.com/fatih/vim-go.git ~/.vim/bundle/vim-go; \
 	fi
 
 # Download YouCompleteMe for vim.
 ycm:
 	sudo apt-get -f install cmake build-essential python-dev || true
 	mkdir -p ~/.vim/bundle
-	if [! -e ~/.vim/bundle/vim-go]; then
-		git clone git@github.com:Valloric/YouCompleteMe.git ~/.vim/bundle/YouCompleteMe
+	if [ ! -e ~/.vim/bundle/vim-go ]; then \
+		git clone git@github.com:Valloric/YouCompleteMe.git ~/.vim/bundle/YouCompleteMe; \
 	fi
 	cd ~/.vim/bundle/YouCompleteMe && git submodule update --init --recursive
 	cd ~/.vim/bundle/YouCompleteMe && ./install.py 
