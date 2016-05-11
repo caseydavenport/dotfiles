@@ -8,6 +8,9 @@ plugins: go-plugin ycm
 vimrc: pathogen
 	 ln -sf ${CWD}/.vimrc ${HOME}/.vimrc
 
+mac-bash-profile:
+	ln -sf ${CWD}/osx.bash.profile ${HOME}/.profile
+
 # Tmux config.
 tmux: 
 	ln -sf ${CWD}/.tmux.conf ${HOME}/.tmux.conf
