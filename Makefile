@@ -4,6 +4,9 @@ CWD=$(shell pwd)
 all: vimrc git-config plugins
 plugins: go-plugin ycm
 
+# Tools for Go development.
+golang: go-plugin tagbar go-explorer
+
 # Install .vimrc file.
 vimrc: pathogen
 	 ln -sf ${CWD}/.vimrc ${HOME}/.vimrc
@@ -25,6 +28,21 @@ go-plugin: pathogen
 	if [ ! -e ~/.vim/bundle/vim-go ]; then \
 		mkdir -p ~/.vim/bundle; \
 		git clone https://github.com/fatih/vim-go.git ~/.vim/bundle/vim-go; \
+	fi
+
+# Install tagbar - used in conjunction with VimGo.
+tagbar: 
+	mkdir -p ~/.vim/bundle
+	if [ ! -e ~/.vim/bundle/tagbar ]; then \
+		git clone https://github.com/majutsushi/tagbar.git ~/.vim/bundle/tagbar; \
+	fi
+	echo "You need to install ctags as well! http://ctags.sourceforge.net/"
+
+go-explorer:
+	mkdir -p ~/.vim/bundle;
+	go get github.com/garyburd/go-explorer/src/getool
+	if [ ! -e ~/.vim/bundle/go-explorer ]; then \
+		git clone https://github.com/garyburd/go-explorer.git ~/.vim/bundle/go-explorer; \
 	fi
 
 # Download YouCompleteMe for vim.

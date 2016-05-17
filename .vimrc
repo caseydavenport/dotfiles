@@ -102,3 +102,6 @@ augroup END
 execute pathogen#infect()
 syntax on
 filetype plugin indent on
+
+" For tagbar, set F9 as the toggle button.
+nnoremap <silent> <F9> :TagbarToggle<CR>

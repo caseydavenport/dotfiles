@@ -11,7 +11,7 @@ source '/Users/casey/google-cloud-sdk/path.bash.inc'
 source '/Users/casey/google-cloud-sdk/completion.bash.inc'
 
 # Set GOPATH.
-export GOPATH=/Users/casey/repos
+export GOPATH=/Users/casey/repos/gopath
 
 # Add go binaries to path.
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
