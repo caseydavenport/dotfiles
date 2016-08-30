@@ -62,6 +62,10 @@ git-config:
 	git config --global user.email "davenport.cas@gmail.com"
 	git config --global color.ui true
 
+# Slate for OSX
+slate:
+	cd /Applications && curl http://www.ninjamonkeysoftware.com/slate/versions/slate-latest.tar.gz | tar -xz
+
 # Remove YouCompleteMe.
 clean-ycm:
 	rm -rf ~/.vim/bundle/YouCompleteMe

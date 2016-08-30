@@ -1,3 +1,6 @@
+" Set status line
+set statusline=%f%=%l,%c\ %P
+
 " Set color
 color koehler
 
@@ -89,7 +92,25 @@ set tm=50
 " set lbr
 " set tw=120
 
-augroup vimrc_autocmds
+" Execute Pathogen plugins
+execute pathogen#infect()
+syntax on
+filetype plugin indent on
+
+" For tagbar, set F9 as the toggle button.
+nnoremap <silent> <F9> :TagbarToggle<CR>
+
+" Golang autocommands.
+augroup vimrc_go_autocmds
+	" Open the tagbar and resize it to be a bit bigger.
+	autocmd VimEnter *.go TagbarOpen
+
+	" Delete trailing whitespace on go files.
+        autocmd BufWrite *.go :call DeleteTrailingWS()
+augroup END
+
+" Python autocommands.
+augroup vimrc_py_autocmds
 	" Highlight long lines for python files.
 	autocmd BufEnter *.py highlight OverLength ctermbg=white ctermfg=darkred guibg=#111111
 	autocmd BufEnter *.py match OverLength /\%80v.\+/
@@ -98,10 +119,38 @@ augroup vimrc_autocmds
         autocmd BufWrite *.py :call DeleteTrailingWS()
 augroup END
 
-" Execute Pathogen plugins
-execute pathogen#infect()
-syntax on
-filetype plugin indent on
+" Golang vim-go mappings for running, building, testing.
+au FileType go nmap <leader>r <Plug>(go-run)
+au FileType go nmap <leader>b <Plug>(go-build)
+au FileType go nmap <leader>t <Plug>(go-test)
+au FileType go nmap <leader>c <Plug>(go-coverage)
 
-" For tagbar, set F9 as the toggle button.
-nnoremap <silent> <F9> :TagbarToggle<CR>
+" Golang vim-go mappings for opening targets in various places.
+au FileType go nmap <Leader>df <Plug>(go-def)
+au FileType go nmap <Leader>ds <Plug>(go-def-split)
+au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
+au FileType go nmap <Leader>dt <Plug>(go-def-tab)
+
+" Golang vim-go mappings for docs
+au FileType go nmap <Leader>g <Plug>(go-doc)
+au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
+
+" Show interfaces which are implemented by the type under cursor.
+au FileType go nmap <Leader>s <Plug>(go-implements)
+
+" Show type info for the word under cursor.
+au FileType go nmap <Leader>i <Plug>(go-info)
+
+" Rename the identifier under the cursor.
+au FileType go nmap <Leader>e <Plug>(go-rename)
+
+" Enable Golang syntax highlighting
+let g:go_highlight_functions = 1
+let g:go_highlight_methods = 1
+let g:go_highlight_fields = 1
+let g:go_highlight_types = 1
+let g:go_highlight_operators = 1
+let g:go_highlight_build_constraints = 1
+
+" Set timeout appropriately so leader commands don't time out right away.
+set timeout timeoutlen=2000 ttimeoutlen=2000
