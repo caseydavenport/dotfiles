@@ -100,6 +100,19 @@ filetype plugin indent on
 " For tagbar, set F9 as the toggle button.
 nnoremap <silent> <F9> :TagbarToggle<CR>
 
+" yaml autocommands.
+augroup vimrc_md_autocmds
+	" Delete trailing whitespace on go files.
+        autocmd BufWrite *.yaml :call DeleteTrailingWS()
+augroup END
+
+
+" Markdown autocommands.
+augroup vimrc_md_autocmds
+	" Delete trailing whitespace on go files.
+        autocmd BufWrite *.md :call DeleteTrailingWS()
+augroup END
+
 " Golang autocommands.
 augroup vimrc_go_autocmds
 	" Open the tagbar and resize it to be a bit bigger.
@@ -108,6 +121,7 @@ augroup vimrc_go_autocmds
 	" Delete trailing whitespace on go files.
         autocmd BufWrite *.go :call DeleteTrailingWS()
 augroup END
+
 
 " Python autocommands.
 augroup vimrc_py_autocmds
@@ -151,6 +165,10 @@ let g:go_highlight_fields = 1
 let g:go_highlight_types = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
+
+" move among buffers with CTRL
+map <C-J> :bnext<CR>
+map <C-K> :bprev<CR>
 
 " Set timeout appropriately so leader commands don't time out right away.
 set timeout timeoutlen=2000 ttimeoutlen=2000

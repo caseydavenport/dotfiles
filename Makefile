@@ -45,6 +45,13 @@ go-explorer:
 		git clone https://github.com/garyburd/go-explorer.git ~/.vim/bundle/go-explorer; \
 	fi
 
+# Download vim expand region plugin.
+vim-expand-region:
+	if [ ! -e ~/.vim/bundle/vim-expand-region ]; then \
+		mkdir -p ~/.vim/bundle; \
+		git clone https://github.com/terryma/vim-expand-region ~/.vim/bundle/vim-expand-region; \
+	fi
+
 # Download YouCompleteMe for vim.
 ycm:
 	sudo apt-get -f install cmake build-essential python-dev || true
