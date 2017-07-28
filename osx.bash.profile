@@ -15,13 +15,22 @@ export GOPATH=/Users/casey/repos/gopath
 
 # Add go binaries to path.
 export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+export GOBIN=$GOPATH/bin
 
 # Add GNU tar to path.
 export PATH=/usr/local/opt/gnu-tar/libexec/gnubin:$PATH
 
+# Set vim as my editor.
+export EDITOR=vim
+
 # Bash alias to start go programming.
 alias letsgo='cd $GOPATH/src && printf "\nChanged to: $(pwd)\n"'
 
+# Shortcuts for kubectl
+alias k='kubectl'
+alias kgc='set -x; kubectl get pods -n kube-system -l k8s-app=calico-node; set +x'
+
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
+export PATH="$PATH:/Users/casey/repos/k8sh" # Add k8sh to PATH for easy access.
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
