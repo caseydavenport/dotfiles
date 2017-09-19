@@ -29,6 +29,10 @@ alias letsgo='cd $GOPATH/src && printf "\nChanged to: $(pwd)\n"'
 # Shortcuts for kubectl
 alias k='kubectl'
 alias kgc='set -x; kubectl get pods -n kube-system -l k8s-app=calico-node; set +x'
+alias kgt='set -x; kubectl get pods -n kube-system -l k8s-app=calico-typha; set +x'
+
+# Alias watch so that it works with other aliased commands.
+alias watch='watch '
 
 export PATH="$PATH:$HOME/.rvm/bin" # Add RVM to PATH for scripting
 export PATH="$PATH:/Users/casey/repos/k8sh" # Add k8sh to PATH for easy access.
