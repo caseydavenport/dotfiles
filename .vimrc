@@ -1,3 +1,10 @@
+" Plugin directives for vim-plug.
+call plug#begin()
+" Plug 'ctrlpvim/ctrlp.vim'
+" Plug 'Valloric/YouCompleteMe'
+call plug#end()
+
+
 " Set status line
 set statusline=%f%=%l,%c\ %P
 
@@ -115,13 +122,7 @@ augroup END
 
 " Golang autocommands.
 augroup vimrc_go_autocmds
-	" Open the tagbar and resize it to be a bit bigger.
-	autocmd VimEnter *.go TagbarOpen
-
-	" Delete trailing whitespace on go files.
-        autocmd BufWrite *.go :call DeleteTrailingWS()
 augroup END
-
 
 " Python autocommands.
 augroup vimrc_py_autocmds
@@ -157,6 +158,16 @@ au FileType go nmap <Leader>i <Plug>(go-info)
 
 " Rename the identifier under the cursor.
 au FileType go nmap <Leader>e <Plug>(go-rename)
+
+" Alias some GoAlternate variations to new shorter commands.
+autocmd Filetype go command! -bang A call go#alternate#Switch(<bang>0, 'edit')
+autocmd Filetype go command! -bang AV call go#alternate#Switch(<bang>0, 'vsplit')
+autocmd Filetype go command! -bang AS call go#alternate#Switch(<bang>0, 'split')
+autocmd Filetype go command! -bang AT call go#alternate#Switch(<bang>0, 'tabe')
+
+" Alias the GoDecls and GoDeclsDir commands so they're shorter.
+:command GD GoDecls
+:command GDD GoDeclsDir
 
 " Enable Golang syntax highlighting
 let g:go_highlight_functions = 1
