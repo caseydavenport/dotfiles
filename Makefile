@@ -4,13 +4,24 @@ CWD=$(shell pwd)
 all: vimrc git-config plugins
 plugins: go-plugin ycm
 
+# General dependencies.
+deps:
+	sudo apt-get install build-essential cmake python-dev python3-dev
+
 # Tools for Go development.
 golang: go-plugin tagbar go-explorer
 
-# Install .vimrc file.
-vimrc: pathogen
-	 ln -sf ${CWD}/.vimrc ${HOME}/.vimrc
+# Vim package manager - vundle
+vundle:
+	mkdir -p ~/.vim/bundle
+	git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
 
+# Install .vimrc file.
+vimrc:
+	ln -sf ${CWD}/.vimrc ${HOME}/.vimrc
+
+# Commands for installing various bash profiles.
+# They're just aliases for copying files around.
 mac-bash-profile:
 	ln -sf ${CWD}/osx.bash.profile ${HOME}/.profile
 
@@ -20,30 +31,9 @@ bash-profile:
 vim-plug:
 	curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-# Tmux config.
-tmux: 
+# Copy tmux configuration into place.
+tmux:
 	ln -sf ${CWD}/.tmux.conf ${HOME}/.tmux.conf
-
-# Installs pathogen plugin manager for vim.
-pathogen:
-	mkdir -p ~/.vim/autoload ~/.vim/bundle
-	curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
-
-# Install the vim golang plugin.
-go-plugin: pathogen
-	if [ ! -e ~/.vim/bundle/vim-go ]; then \
-		mkdir -p ~/.vim/bundle; \
-		git clone https://github.com/fatih/vim-go.git ~/.vim/bundle/vim-go; \
-	fi
-
-# Install tagbar - used in conjunction with VimGo.
-tagbar: 
-	mkdir -p ~/.vim/bundle
-	if [ ! -e ~/.vim/bundle/tagbar ]; then \
-		mkdir -p ~/.vim/bundle; \
-		git clone https://github.com/majutsushi/tagbar.git ~/.vim/bundle/tagbar; \
-	fi
-	echo "You need to install ctags as well! http://ctags.sourceforge.net/"
 
 go-explorer:
 	mkdir -p ~/.vim/bundle;
@@ -52,23 +42,6 @@ go-explorer:
 		mkdir -p ~/.vim/bundle; \
 		git clone https://github.com/garyburd/go-explorer.git ~/.vim/bundle/go-explorer; \
 	fi
-
-# Download vim expand region plugin.
-vim-expand-region:
-	if [ ! -e ~/.vim/bundle/vim-expand-region ]; then \
-		mkdir -p ~/.vim/bundle; \
-		git clone https://github.com/terryma/vim-expand-region ~/.vim/bundle/vim-expand-region; \
-	fi
-
-# Download YouCompleteMe for vim.
-ycm:
-	sudo apt-get -f install cmake build-essential python-dev || true
-	mkdir -p ~/.vim/bundle
-	if [ ! -e ~/.vim/bundle/YouCompleteMe ]; then \
-		git clone git@github.com:Valloric/YouCompleteMe.git ~/.vim/bundle/YouCompleteMe; \
-	fi
-	cd ~/.vim/bundle/YouCompleteMe && git submodule update --init --recursive
-	cd ~/.vim/bundle/YouCompleteMe && ./install.py 
 
 # Install my default git configurations.
 git-config:
@@ -80,15 +53,3 @@ git-config:
 # Slate for OSX
 slate:
 	cd /Applications && curl http://www.ninjamonkeysoftware.com/slate/versions/slate-latest.tar.gz | tar -xz
-
-# Remove YouCompleteMe.
-clean-ycm:
-	rm -rf ~/.vim/bundle/YouCompleteMe
-
-# Remove vim-go.
-clean-go-plugin:
-	rm -rf ~/.vim/bundle/vim-go
-
-# Remove .vimrc symlink.
-clean:
-	rm -f ${HOME}/.vimrc

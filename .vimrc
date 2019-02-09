@@ -1,8 +1,33 @@
-" Plugin directives for vim-plug.
-call plug#begin()
-" Plug 'ctrlpvim/ctrlp.vim'
-" Plug 'Valloric/YouCompleteMe'
-call plug#end()
+" be iMproved, required.
+set nocompatible
+filetype off
+
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+" let Vundle manage Vundle, required
+Plugin 'VundleVim/Vundle.vim'
+Plugin 'Valloric/YouCompleteMe'
+Plugin 'fatih/vim-go'
+Plugin 'majutsushi/tagbar'
+Plugin 'terryma/vim-expand-region'
+
+" All of your Plugins must be added before the following line
+call vundle#end()	     " required
+filetype plugin indent on    " required
+
+" To ignore plugin indent changes, instead use:
+"filetype plugin on
+"
+" Brief help
+" :PluginList       - lists configured plugins
+" :PluginInstall    - installs plugins; append `!` to update or just :PluginUpdate
+" :PluginSearch foo - searches for foo; append `!` to refresh local cache
+" :PluginClean      - confirms removal of unused plugins; append `!` to auto-approve removal
+"
+" see :h vundle for more details or wiki for FAQ
+" Put your non-Plugin stuff after this line
 
 
 " Set status line
@@ -21,7 +46,7 @@ set hls
 set completeopt=longest,menuone
 
 " Set enter key as select popup item
-inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"                                                                                                                         
+inoremap <expr> <CR> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
 set backspace=indent,eol,start
 
 " Set 7 lines to the cursor - when moving vertically using j/k
@@ -36,7 +61,7 @@ set wildignore=*.o,*~,*.pyc
 " Ignore case when searching
 set ignorecase
 
-" When searching try to be smart about cases 
+" When searching try to be smart about cases
 set smartcase
 
 " Makes search act like search in modern browsers
@@ -59,25 +84,25 @@ autocmd BufReadPost *
      \   exe "normal! g`\"" |
      \ endif
 
-" Python spacing 
+" Python spacing
 autocmd BufRead *.py set expandtab
 autocmd BufRead *.py set shiftwidth=4
 autocmd BufRead *.py set tabstop=4
 
 " lua spacing
 autocmd BufRead *.lua set expandtab
-autocmd BufRead *.lua set shiftwidth=2 
-autocmd BufRead *.lua set tabstop=2 
+autocmd BufRead *.lua set shiftwidth=2
+autocmd BufRead *.lua set tabstop=2
 autocmd BufRead *.yml set expandtab
 
-" Be smart when using tabs 
+" Be smart when using tabs
 set smarttab
 
 " NO SWAP FILE
 set noswapfile
 
 " Auto indent on new line
-set nosmartindent 
+set nosmartindent
 filetype plugin indent on
 
 " Set syntax highlighting on
@@ -109,19 +134,20 @@ nnoremap <silent> <F9> :TagbarToggle<CR>
 
 " yaml autocommands.
 augroup vimrc_md_autocmds
-	" Delete trailing whitespace on go files.
-        autocmd BufWrite *.yaml :call DeleteTrailingWS()
+	" Delete trailing whitespace on yaml files.
+	autocmd BufWrite *.yaml :call DeleteTrailingWS()
 augroup END
 
 
 " Markdown autocommands.
 augroup vimrc_md_autocmds
 	" Delete trailing whitespace on go files.
-        autocmd BufWrite *.md :call DeleteTrailingWS()
+	autocmd BufWrite *.md :call DeleteTrailingWS()
 augroup END
 
 " Golang autocommands.
 augroup vimrc_go_autocmds
+	autocmd BufWrite *.go :GoImports
 augroup END
 
 " Python autocommands.
@@ -131,7 +157,7 @@ augroup vimrc_py_autocmds
 	autocmd BufEnter *.py match OverLength /\%80v.\+/
 
 	" Delete trailing whitespace on python files.
-        autocmd BufWrite *.py :call DeleteTrailingWS()
+	autocmd BufWrite *.py :call DeleteTrailingWS()
 augroup END
 
 " Golang vim-go mappings for running, building, testing.
