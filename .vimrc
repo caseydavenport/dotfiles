@@ -12,6 +12,13 @@ Plugin 'Valloric/YouCompleteMe'
 Plugin 'fatih/vim-go'
 Plugin 'majutsushi/tagbar'
 Plugin 'terryma/vim-expand-region'
+Plugin 'scrooloose/nerdtree'
+Plugin 'ctrlpvim/ctrlp.vim'
+Plugin 'tpope/vim-commentary'
+Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-rhubarb'
+Plugin 'terryma/vim-multiple-cursors'
+Plugin 'itchyny/lightline.vim'
 
 " All of your Plugins must be added before the following line
 call vundle#end()	     " required
@@ -29,6 +36,8 @@ filetype plugin indent on    " required
 " see :h vundle for more details or wiki for FAQ
 " Put your non-Plugin stuff after this line
 
+" Always show the status line
+set laststatus=2
 
 " Set status line
 set statusline=%f%=%l,%c\ %P
@@ -67,15 +76,17 @@ set smartcase
 " Makes search act like search in modern browsers
 set incsearch
 
-" Always have item selected
-inoremap <expr> <C-n> pumvisible() ? '<C-n>' : '<C-n><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-inoremap <expr> <M-,> pumvisible() ? '<C-n>' : '<C-x><C-o><C-n><C-p><C-r>=pumvisible() ? "\<lt>Down>" : ""<CR>'
-
 " Delete trailing white space on save
 func! DeleteTrailingWS()
   exe "normal mz"
   %s/\s\+$//ge
   exe "normal `z"
+endfunc
+
+" Delete trailing white space on save
+func! NavigationToggle()
+	NERDTreeToggle
+	TagbarToggle
 endfunc
 
 " Return to last edit position when opening files (You want this!)
@@ -129,25 +140,30 @@ execute pathogen#infect()
 syntax on
 filetype plugin indent on
 
-" For tagbar, set F9 as the toggle button.
-nnoremap <silent> <F9> :TagbarToggle<CR>
+" Toggle navigation tools. 
+nnoremap <silent> <F9> :call NavigationToggle()<CR>
 
 " yaml autocommands.
 augroup vimrc_md_autocmds
-	" Delete trailing whitespace on yaml files.
 	autocmd BufWrite *.yaml :call DeleteTrailingWS()
 augroup END
 
 
 " Markdown autocommands.
 augroup vimrc_md_autocmds
-	" Delete trailing whitespace on go files.
 	autocmd BufWrite *.md :call DeleteTrailingWS()
 augroup END
 
 " Golang autocommands.
 augroup vimrc_go_autocmds
+	autocmd BufWrite *.md :call DeleteTrailingWS()
 	autocmd BufWrite *.go :GoImports
+	autocmd BufRead /home/repos/gopath/src/github.com/projectcalico/*.go
+        \  let s:tmp = matchlist(expand('%:p'),
+            \ '/home/repos/gopath/src/\(github.com/projectcalico/[^/]\+\)')
+        \| if len(s:tmp) > 1 |  exe 'silent :GoGuruScope ' . s:tmp[1] | endif
+        \| unlet s:tmp
+
 augroup END
 
 " Python autocommands.
@@ -163,8 +179,6 @@ augroup END
 " Golang vim-go mappings for running, building, testing.
 au FileType go nmap <leader>r <Plug>(go-run)
 au FileType go nmap <leader>b <Plug>(go-build)
-au FileType go nmap <leader>t <Plug>(go-test)
-au FileType go nmap <leader>c <Plug>(go-coverage)
 
 " Golang vim-go mappings for opening targets in various places.
 au FileType go nmap <Leader>df <Plug>(go-def)
@@ -179,11 +193,20 @@ au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
 " Show interfaces which are implemented by the type under cursor.
 au FileType go nmap <Leader>s <Plug>(go-implements)
 
+" Show potential implementations of the function under the cursor.
+au FileType go nmap <Leader>f <Plug>(go-callees)
+
+" Show potential callers of the function under the cursor.
+au FileType go nmap <Leader>c <Plug>(go-callers)
+
 " Show type info for the word under cursor.
 au FileType go nmap <Leader>i <Plug>(go-info)
 
 " Rename the identifier under the cursor.
 au FileType go nmap <Leader>e <Plug>(go-rename)
+
+" Switch CWD to the directroy of the open buffer.
+map <leader>cd :cd %:p:h<cr>:pwd<cr>
 
 " Alias some GoAlternate variations to new shorter commands.
 autocmd Filetype go command! -bang A call go#alternate#Switch(<bang>0, 'edit')
@@ -203,9 +226,15 @@ let g:go_highlight_types = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
 
+" Set fuzzy file search shortcut.
+let g:ctrlp_map = '<c-f>'
+
 " move among buffers with CTRL
 map <C-J> :bnext<CR>
 map <C-K> :bprev<CR>
 
 " Set timeout appropriately so leader commands don't time out right away.
 set timeout timeoutlen=2000 ttimeoutlen=2000
+
+" Set hidden
+set hidden

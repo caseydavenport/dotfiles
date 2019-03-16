@@ -2,14 +2,14 @@
 CWD=$(shell pwd)
 
 all: vimrc git-config plugins
-plugins: go-plugin ycm
+plugins: ycm
 
 # General dependencies.
 deps:
 	sudo apt-get install build-essential cmake python-dev python3-dev
 
 # Tools for Go development.
-golang: go-plugin tagbar go-explorer
+golang: go-explorer
 
 # Vim package manager - vundle
 vundle:
@@ -27,9 +27,6 @@ mac-bash-profile:
 
 bash-profile:
 	ln -sf ${CWD}/bash.profile ${HOME}/.casey.profile
-
-vim-plug:
-	curl -fLo ~/.vim/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
 # Copy tmux configuration into place.
 tmux:
