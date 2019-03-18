@@ -20,6 +20,10 @@ vundle:
 vimrc:
 	ln -sf ${CWD}/.vimrc ${HOME}/.vimrc
 
+# Install .zshrc file.
+zshrc:
+	ln -sf ${CWD}/.zshrc ${HOME}/.zshrc
+
 # Commands for installing various bash profiles.
 # They're just aliases for copying files around.
 mac-bash-profile:
