@@ -141,6 +141,8 @@ syntax on
 filetype plugin indent on
 
 " Toggle navigation tools. 
+nnoremap <silent> <F1> :NERDTreeToggle<CR>
+nnoremap <silent> <F2> :TagbarToggle<CR>
 nnoremap <silent> <F9> :call NavigationToggle()<CR>
 
 " yaml autocommands.
@@ -158,12 +160,14 @@ augroup END
 augroup vimrc_go_autocmds
 	autocmd BufWrite *.md :call DeleteTrailingWS()
 	autocmd BufWrite *.go :GoImports
-	autocmd BufRead /home/repos/gopath/src/github.com/projectcalico/*.go
-        \  let s:tmp = matchlist(expand('%:p'),
-            \ '/home/repos/gopath/src/\(github.com/projectcalico/[^/]\+\)')
-        \| if len(s:tmp) > 1 |  exe 'silent :GoGuruScope ' . s:tmp[1] | endif
-        \| unlet s:tmp
-
+	" Configure guru with the appropriate entry points for each repository.
+	" TODO: Condense this into something more generic.
+        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/node/*.go exe 'silent :GoGuruScope github.com/projectcalico/node/cmd/...'
+        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/felix/*.go exe 'silent :GoGuruScope github.com/projectcalico/felix/cmd/...'
+        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/cni-plugin/*.go exe 'silent :GoGuruScope github.com/projectcalico/cni-plugin/cmd/...'
+        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/typha/*.go exe 'silent :GoGuruScope github.com/projectcalico/typha/cmd/...'
+        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/kube-controllers/*.go exe 'silent :GoGuruScope github.com/projectcalico/kube-controllers/cmd/...'
+        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/libcalico-go/*.go exe 'silent :GoGuruScope github.com/projectcalico/libcalico-go/lib/...'
 augroup END
 
 " Python autocommands.
@@ -238,3 +242,9 @@ set timeout timeoutlen=2000 ttimeoutlen=2000
 
 " Set hidden
 set hidden
+
+" Bad habits.
+noremap <Up> <NOP>
+noremap <Down> <NOP>
+noremap <Left> <NOP>
+noremap <Right> <NOP>
