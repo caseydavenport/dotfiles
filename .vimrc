@@ -157,17 +157,23 @@ augroup vimrc_md_autocmds
 augroup END
 
 " Golang autocommands.
+let vim_projcalico = "$GOPATH/src/github.com/projectcalico"
+let github_projcalico = "github.com/projectcalico"
+
+function SetupGoGuruScopePath(path)
+  execute "autocmd BufRead " . g:vim_projcalico . a:path . "/*.go exe 'silent :GoGuruScope " . g:github_projcalico . a:path . "/..."
+endfunc
+
+" Golang autocommands.
 augroup vimrc_go_autocmds
-	autocmd BufWrite *.md :call DeleteTrailingWS()
-	autocmd BufWrite *.go :GoImports
-	" Configure guru with the appropriate entry points for each repository.
-	" TODO: Condense this into something more generic.
-        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/node/*.go exe 'silent :GoGuruScope github.com/projectcalico/node/cmd/...'
-        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/felix/*.go exe 'silent :GoGuruScope github.com/projectcalico/felix/cmd/...'
-        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/cni-plugin/*.go exe 'silent :GoGuruScope github.com/projectcalico/cni-plugin/cmd/...'
-        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/typha/*.go exe 'silent :GoGuruScope github.com/projectcalico/typha/cmd/...'
-        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/kube-controllers/*.go exe 'silent :GoGuruScope github.com/projectcalico/kube-controllers/cmd/...'
-        autocmd BufRead /home/casey/repos/gopath/src/github.com/projectcalico/libcalico-go/*.go exe 'silent :GoGuruScope github.com/projectcalico/libcalico-go/lib/...'
+        autocmd BufWritePre *.go :call DeleteTrailingWS()
+        autocmd BufWritePre *.go :GoImports
+        :call SetupGoGuruScopePath("/node/cmd")
+        :call SetupGoGuruScopePath("/felix/cmd")
+        :call SetupGoGuruScopePath("/cni-plugin/cmd")
+        :call SetupGoGuruScopePath("/typha/cmd")
+        :call SetupGoGuruScopePath("/kube-controllers/cmd")
+        :call SetupGoGuruScopePath("/libcalico-go/lib")
 augroup END
 
 " Python autocommands.
