@@ -1,5 +1,5 @@
 # Source git completion.
-source '/home/casey/dotfiles/git-completion.bash'
+source '/home/casey/repos/dotfiles/git-completion.bash'
 
 # Makefile auto-completionm magic.
 complete -W "`test -e Makefile && grep -oE '^[a-zA-Z0-9_-]+:([^=]|$)' Makefile | sed 's/[^a-zA-Z0-9_-]*$//'`" make

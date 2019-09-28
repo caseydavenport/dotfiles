@@ -1,15 +1,11 @@
 # Location of the dotfiles repo.
 CWD=$(shell pwd)
 
-all: vimrc git-config plugins
-plugins: ycm
+all: vimrc git-config 
 
 # General dependencies.
 deps:
 	sudo apt-get install build-essential cmake python-dev python3-dev
-
-# Tools for Go development.
-golang: go-explorer
 
 # Vim package manager - vundle
 vundle:
@@ -35,14 +31,6 @@ bash-profile:
 # Copy tmux configuration into place.
 tmux:
 	ln -sf ${CWD}/.tmux.conf ${HOME}/.tmux.conf
-
-go-explorer:
-	mkdir -p ~/.vim/bundle;
-	go get github.com/garyburd/go-explorer/src/getool
-	if [ ! -e ~/.vim/bundle/go-explorer ]; then \
-		mkdir -p ~/.vim/bundle; \
-		git clone https://github.com/garyburd/go-explorer.git ~/.vim/bundle/go-explorer; \
-	fi
 
 # Install my default git configurations.
 git-config:
