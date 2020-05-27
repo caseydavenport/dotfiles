@@ -236,6 +236,11 @@ let g:go_highlight_types = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
 
+" Use go mods.
+let g:go_def_mode='gopls'
+let g:go_info_mode='gopls'
+"let g:go_def_mod_mode='godef'
+
 " Set fuzzy file search shortcut.
 let g:ctrlp_map = '<c-f>'
 
