@@ -61,6 +61,8 @@ ZSH_THEME="powerlevel9k/powerlevel9k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
   git
+  zsh-autosuggestions 
+  zsh-syntax-highlighting
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -118,3 +120,15 @@ cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/)
 
 # Powerlevelk9 settings
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs)
+
+# Source github token for hub commands.
+source ~/.github_token
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# Auto-suggestion configuration.
+bindkey '^k' autosuggest-accept
+
+# kube-ps1
+# source $ZSH_CUSTOM/plugins/kube-ps1/kube-ps1.sh
+# PROMPT='$(kube_ps1)'$PROMPT
