@@ -136,7 +136,7 @@ set tm=50
 " set tw=120
 
 " Execute Pathogen plugins
-execute pathogen#infect()
+" execute pathogen#infect()
 syntax on
 filetype plugin indent on
 

@@ -5,7 +5,7 @@ all: vimrc git-config
 
 # General dependencies.
 deps:
-	sudo apt-get install build-essential cmake python-dev python3-dev
+	sudo apt install build-essential cmake python-dev python3-dev zsh
 
 # Vim package manager - vundle
 vundle:
@@ -27,6 +27,19 @@ mac-bash-profile:
 
 bash-profile:
 	ln -sf ${CWD}/bash.profile ${HOME}/.casey.profile
+
+# zsh configuration files
+zsh-config: powerlevel9k zsh-autosuggestions zsh-syntax-highlighting
+
+powerlevel9k:
+	git clone https://github.com/bhilburn/powerlevel9k.git ${HOME}/.oh-my-zsh/custom/themes/powerlevel9k
+
+zsh-autosuggestions:
+	git clone https://github.com/zsh-users/zsh-autosuggestions ${HOME}/.oh-my-zsh/plugins/zsh-autosuggestions
+
+zsh-syntax-highlighting:
+	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${HOME}/.oh-my-zsh/plugins/zsh-syntax-highlighting
+
 
 # Copy tmux configuration into place.
 tmux:
