@@ -157,24 +157,13 @@ augroup vimrc_md_autocmds
 augroup END
 
 " Golang autocommands.
-let vim_projcalico = "$GOPATH/src/github.com/projectcalico"
-let github_projcalico = "github.com/projectcalico"
-
-function SetupGoGuruScopePath(path)
-  execute "autocmd BufRead " . g:vim_projcalico . a:path . "/*.go exe 'silent :GoGuruScope " . g:github_projcalico . a:path . "/..."
-endfunc
-
-" Golang autocommands.
-augroup vimrc_go_autocmds
-        autocmd BufWritePre *.go :call DeleteTrailingWS()
-        autocmd BufWritePre *.go :GoImports
-        :call SetupGoGuruScopePath("/node/cmd")
-        :call SetupGoGuruScopePath("/felix/cmd")
-        :call SetupGoGuruScopePath("/cni-plugin/cmd")
-        :call SetupGoGuruScopePath("/typha/cmd")
-        :call SetupGoGuruScopePath("/kube-controllers/cmd")
-        :call SetupGoGuruScopePath("/libcalico-go/lib")
-augroup END
+"
+" Configure github.com/projectcalico GoGuruScope properly.
+autocmd BufRead /home/casey/repos/gopath/src/*.go
+      \  let s:tmp = matchlist(expand('%:p'),
+          \ '/home/casey/repos/gopath/src/\(github.com/projectcalico/[^/]\+\)')
+      \| if len(s:tmp) > 1 |  exe 'silent :GoGuruScope ' . s:tmp[1] | endif
+      \| unlet s:tmp
 
 " Python autocommands.
 augroup vimrc_py_autocmds
