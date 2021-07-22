@@ -19,6 +19,7 @@ Plugin 'tpope/vim-fugitive'
 Plugin 'tpope/vim-rhubarb'
 Plugin 'terryma/vim-multiple-cursors'
 Plugin 'itchyny/lightline.vim'
+Plugin 'SirVer/ultisnips'
 
 " All of your Plugins must be added before the following line
 call vundle#end()	     " required
@@ -42,8 +43,11 @@ set laststatus=2
 " Set status line
 set statusline=%f%=%l,%c\ %P
 
-" Set color
+" Set colorscheme
 color koehler
+
+" Set syntax highlighting on
+syntax on
 
 " Line numbering
 set nu
@@ -116,9 +120,6 @@ set noswapfile
 set nosmartindent
 filetype plugin indent on
 
-" Set syntax highlighting on
-syntax on
-
 " Show matching brackets when text indicator is over them
 set showmatch
 
@@ -147,13 +148,13 @@ nnoremap <silent> <F9> :call NavigationToggle()<CR>
 
 " yaml autocommands.
 augroup vimrc_md_autocmds
-	autocmd BufWrite *.yaml :call DeleteTrailingWS()
+	" autocmd BufWrite *.yaml :call DeleteTrailingWS()
 augroup END
 
 
 " Markdown autocommands.
 augroup vimrc_md_autocmds
-	autocmd BufWrite *.md :call DeleteTrailingWS()
+	" autocmd BufWrite *.md :call DeleteTrailingWS()
 augroup END
 
 " Golang autocommands.
@@ -172,7 +173,7 @@ augroup vimrc_py_autocmds
 	autocmd BufEnter *.py match OverLength /\%80v.\+/
 
 	" Delete trailing whitespace on python files.
-	autocmd BufWrite *.py :call DeleteTrailingWS()
+	" autocmd BufWrite *.py :call DeleteTrailingWS()
 augroup END
 
 " Golang vim-go mappings for running, building, testing.
@@ -248,3 +249,18 @@ noremap <Up> <NOP>
 noremap <Down> <NOP>
 noremap <Left> <NOP>
 noremap <Right> <NOP>
+
+" Override the status line to be more visible.
+highlight StatusLine ctermbg=black ctermfg=white
+
+"""""""""""""
+" Configure snippet insertion
+"""""""""""""
+
+" Trigger configuration. Do not use <tab> if you use https://github.com/Valloric/YouCompleteMe.
+let g:UltiSnipsExpandTrigger="<C-F>"
+"let g:UltiSnipsJumpForwardTrigger="<C-J>"
+"let g:UltiSnipsJumpBackwardTrigger="<C-K>"
+
+" If you want :UltiSnipsEdit to split your window.
+let g:UltiSnipsEditSplit="vertical"

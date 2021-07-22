@@ -100,6 +100,7 @@ source $ZSH/oh-my-zsh.sh
 # alias to start go programming.
 alias letsgo='cd $GOPATH/src && printf "\nChanged to: $(pwd)\n"'
 export GOPATH=/home/casey/repos/gopath
+export GOPRIVATE=github.com/tigera/*
 
 # Alias watch so that it works with other aliased commands.
 alias watch='watch '
@@ -114,6 +115,8 @@ alias kgt='set -x; kubectl get pods -n kube-system -l k8s-app=calico-typha; set 
 export PATH=~/.local/bin:$PATH
 export PATH=$PATH:/usr/local/go/bin
 export PATH=$PATH:$GOPATH/bin
+export PATH=$PATH:$HOME/.krew/bin
+
 
 setopt auto_cd
 cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/)
