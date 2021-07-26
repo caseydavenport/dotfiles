@@ -1,6 +1,11 @@
-" be iMproved, required.
+" be improved, required.
 set nocompatible
 filetype off
+
+" Enable spell checking
+set spell
+set spelllang=en
+set spellfile=$HOME/repos/dotfiles/vim-spellfile-en.utf-8.add
 
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -43,7 +48,7 @@ set laststatus=2
 " Set status line
 set statusline=%f%=%l,%c\ %P
 
-" Set colorscheme
+" Set color scheme
 color koehler
 
 " Set syntax highlighting on
@@ -52,7 +57,7 @@ syntax on
 " Line numbering
 set nu
 
-" Higlhight search
+" Highlight search
 set hls
 
 " Configure auto-completion menu
@@ -132,7 +137,7 @@ set novisualbell
 set t_vb=
 set tm=50
 
-" Linebreak on 120 characters
+" Line break on 120 characters
 " set lbr
 " set tw=120
 
@@ -205,7 +210,7 @@ au FileType go nmap <Leader>i <Plug>(go-info)
 " Rename the identifier under the cursor.
 au FileType go nmap <Leader>e <Plug>(go-rename)
 
-" Switch CWD to the directroy of the open buffer.
+" Switch CWD to the directory of the open buffer.
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
 
 " Alias some GoAlternate variations to new shorter commands.
