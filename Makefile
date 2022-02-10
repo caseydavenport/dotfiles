@@ -27,18 +27,21 @@ bash-profile:
 # ZSH addons here
 ############################################################
 zsh-addons: powerlevel10k zsh-autosuggestions zsh-syntax-highlighting .fonts-installed
-$(HOME)/.oh-my-zsh:
-	sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+$(HOME)/.oh-my-zsh: install.sh
+	./install-oh-my-zsh.sh
+
+install-oh-my-zsh.sh:
+	curl -L https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o $@ && chmod +x $@
 
 powerlevel10k: $(HOME)/.oh-my-zsh/custom/themes/powerlevel10k
 $(HOME)/.oh-my-zsh/custom/themes/powerlevel10k: $(HOME)/.oh-my-zsh
 	git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $@
 
-zsh-autosuggestions:
+zsh-autosuggestions: $(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions
 $(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions: $(HOME)/.oh-my-zsh
 	git clone https://github.com/zsh-users/zsh-autosuggestions $@
 
-zsh-syntax-highlighting:
+zsh-syntax-highlighting: $(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting
 $(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting: $(HOME)/.oh-my-zsh
 	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${HOME}/.oh-my-zsh/plugins/zsh-syntax-highlighting
 
