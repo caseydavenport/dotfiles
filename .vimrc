@@ -2,8 +2,8 @@
 set nocompatible
 filetype off
 
-" Enable spell checking
-set spell
+" Spell checking
+set nospell
 set spelllang=en
 set spellfile=$HOME/repos/dotfiles/vim-spellfile-en.utf-8.add
 
@@ -15,6 +15,7 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'fatih/vim-go'
+Plugin 'AndrewRadev/splitjoin.vim'
 Plugin 'majutsushi/tagbar'
 Plugin 'terryma/vim-expand-region'
 Plugin 'scrooloose/nerdtree'
@@ -42,11 +43,15 @@ filetype plugin indent on    " required
 " see :h vundle for more details or wiki for FAQ
 " Put your non-Plugin stuff after this line
 
+" Set textwidth, useful for comment reflowing using gq
+set textwidth=150
+
 " Always show the status line
 set laststatus=2
 
 " Set status line
-set statusline=%f%=%l,%c\ %P
+" set statusline=%f%=%l,%c\ %P
+" set statusline+=%-10.3n\                     " buffer number
 
 " Set color scheme
 color koehler
@@ -171,6 +176,13 @@ autocmd BufRead /home/casey/repos/gopath/src/*.go
       \| if len(s:tmp) > 1 |  exe 'silent :GoGuruScope ' . s:tmp[1] | endif
       \| unlet s:tmp
 
+" Configure github.com/tigera GoGuruScope properly.
+autocmd BufRead /home/casey/repos/gopath/src/*.go
+      \  let s:tmp = matchlist(expand('%:p'),
+          \ '/home/casey/repos/gopath/src/\(github.com/tigera/[^/]\+\)')
+      \| if len(s:tmp) > 1 |  exe 'silent :GoGuruScope ' . s:tmp[1] | endif
+      \| unlet s:tmp
+
 " Python autocommands.
 augroup vimrc_py_autocmds
 	" Highlight long lines for python files.
@@ -234,7 +246,10 @@ let g:go_highlight_build_constraints = 1
 " Use go mods.
 let g:go_def_mode='gopls'
 let g:go_info_mode='gopls'
-"let g:go_def_mod_mode='godef'
+
+" Use strict goformatting
+" https://github.com/mvdan/gofumpt
+let g:go_gopls_gofumpt=1
 
 " Set fuzzy file search shortcut.
 let g:ctrlp_map = '<c-f>'
@@ -258,6 +273,11 @@ noremap <Right> <NOP>
 " Override the status line to be more visible.
 highlight StatusLine ctermbg=black ctermfg=white
 
+""""""""""""
+" Configure split / join plugin.
+""""""""""""
+let g:splitjoin_split_mapping = 'gS'
+
 """""""""""""
 " Configure snippet insertion
 """""""""""""
@@ -269,3 +289,9 @@ let g:UltiSnipsExpandTrigger="<C-F>"
 
 " If you want :UltiSnipsEdit to split your window.
 let g:UltiSnipsEditSplit="vertical"
+
+" Fugitive Conflict Resolution
+nnoremap <leader>gd :Gvdiff!<CR>
+nnoremap gdt :diffget //2<CR>
+nnoremap gdm :diffget //3<CR>
+nnoremap <leader>w :Gwrite<CR>
