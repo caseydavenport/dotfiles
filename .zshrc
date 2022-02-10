@@ -8,7 +8,7 @@ export ZSH=/home/casey/.oh-my-zsh
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
-ZSH_THEME="powerlevel9k/powerlevel9k"
+ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Set list of themes to load
 # Setting this variable when ZSH_THEME=random
@@ -122,6 +122,7 @@ setopt auto_cd
 cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/)
 
 # Powerlevelk9 settings
+POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs)
 
 # Source github token for hub commands.
