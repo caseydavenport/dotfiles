@@ -243,9 +243,10 @@ let g:go_highlight_types = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
 
-" Use go mods.
-let g:go_def_mode='gopls'
-let g:go_info_mode='gopls'
+" Use gopls.
+let g:go_def_mode = 'gopls'
+let g:go_info_mode = 'gopls'
+let g:ycm_gopls_binary_path = '/home/casey/repos/gopath/bin/gopls'
 
 " Use strict goformatting
 " https://github.com/mvdan/gofumpt

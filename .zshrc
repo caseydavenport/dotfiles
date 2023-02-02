@@ -127,6 +127,7 @@ POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs)
 
 # Source github token for hub commands.
 source ~/.github_token
+source ~/.npm_token
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
