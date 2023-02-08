@@ -274,6 +274,9 @@ noremap <Right> <NOP>
 " Override the status line to be more visible.
 highlight StatusLine ctermbg=black ctermfg=white
 
+" Support for searching for the highlighted text
+vnoremap // y/\V<C-R>=escape(@",'/\')<CR><CR>
+
 """"""""""""
 " Configure split / join plugin.
 """"""""""""
