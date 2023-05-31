@@ -102,6 +102,9 @@ alias letsgo='cd $GOPATH/src && printf "\nChanged to: $(pwd)\n"'
 export GOPATH=/home/casey/repos/gopath
 export GOPRIVATE=github.com/tigera/*
 
+# use nvim
+alias vim=nvim
+
 # Alias watch so that it works with other aliased commands.
 alias watch='watch '
 
