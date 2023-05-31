@@ -43,6 +43,6 @@ vim.keymap.set('n', '<Leader>ds', '<Plug>(go-def-split)')
 -- au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
 vim.keymap.set('n', '<Leader>dv', '<Plug>(go-def-vertical)')
 
--- -- Remap buffer navigation. NOT WORKING FOR SOME REASON
--- map('n', '<C-j>', ':bnext<CR>')
--- map('n', '<C-k>', ':bprev<CR>')
+-- Remap buffer navigation.
+map('n', '<A-j>', ':bnext<CR>')
+map('n', '<A-k>', ':bprev<CR>')
