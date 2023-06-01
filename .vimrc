@@ -247,6 +247,7 @@ let g:go_highlight_build_constraints = 1
 let g:go_def_mode = 'gopls'
 let g:go_info_mode = 'gopls'
 let g:ycm_gopls_binary_path = '/home/casey/repos/gopath/bin/gopls'
+let g:go_build_tags = 'fvtests'
 
 " Use strict goformatting
 " https://github.com/mvdan/gofumpt
