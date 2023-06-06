@@ -24,25 +24,3 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
   pattern = { "*" },
   command = [[%s/\s\+$//e]],
 })
-
-----------------------------------------------------------------
--- Remap keys
-----------------------------------------------------------------
-local function map(mode, lhs, rhs, opts)
-  local options = { noremap=true, silent=true }
-  if opts then
-    options = vim.tbl_extend('force', options, opts)
-  end
-  vim.api.nvim_set_keymap(mode, lhs, rhs, options)
-end
-
-
--- " Golang vim-go mappings for opening targets in various places.
--- au FileType go nmap <Leader>ds <Plug>(go-def-split)
-vim.keymap.set('n', '<Leader>ds', '<Plug>(go-def-split)')
--- au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
-vim.keymap.set('n', '<Leader>dv', '<Plug>(go-def-vertical)')
-
--- Remap buffer navigation.
-map('n', '<A-j>', ':bnext<CR>')
-map('n', '<A-k>', ':bprev<CR>')

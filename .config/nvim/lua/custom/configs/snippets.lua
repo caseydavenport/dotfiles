@@ -24,8 +24,20 @@ local errRet2 =	s("errretfmt", {
   }
 )
 
+-- errPanic is an error check that just panics
+local errPanic =	s("errpanic", {
+    t({
+      "if err != nil {",
+      "  panic(err)",
+      "}"
+    })
+	}
+)
+
+
 -- Load all the snippets we want for Golang here.
 ls.add_snippets("go", {
   errRet1,
   errRet2,
+  errPanic,
 })
