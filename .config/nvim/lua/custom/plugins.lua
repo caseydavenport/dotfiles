@@ -45,6 +45,11 @@ local plugins = {
     config = function(_)
       require 'custom.configs.snippets'
     end
+  },
+  {
+    -- Install copilot.
+    "github/copilot.vim",
+    ft = 'lua,go'
   }
 }
 return plugins
