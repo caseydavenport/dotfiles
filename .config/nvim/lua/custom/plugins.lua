@@ -49,7 +49,24 @@ local plugins = {
   {
     -- Install copilot.
     "github/copilot.vim",
-    ft = 'lua,go'
+    ft = 'lua,go,js,py',
+    config = function(_)
+      vim.g.copilot_no_tab_map = true
+      vim.g.copilot_assume_mapped = true
+      vim.api.nvim_set_keymap("i", "<C-i>", 'copilot#Accept("<CR>")', { silent = true, expr = true })
+      vim.g.copilot_filetypes = {
+        ["*"] = false,
+        ["javascript"] = true,
+        ["typescript"] = true,
+        ["lua"] = false,
+        ["rust"] = true,
+        ["c"] = true,
+        ["c#"] = true,
+        ["c++"] = true,
+        ["go"] = true,
+        ["python"] = true,
+      }
+    end
   }
 }
 return plugins
