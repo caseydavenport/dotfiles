@@ -102,6 +102,9 @@ alias letsgo='cd $GOPATH/src && printf "\nChanged to: $(pwd)\n"'
 export GOPATH=/home/casey/repos/gopath
 export GOPRIVATE=github.com/tigera/*
 
+# use nvim
+alias vim=nvim
+
 # Alias watch so that it works with other aliased commands.
 alias watch='watch '
 
@@ -137,3 +140,7 @@ bindkey '^k' autosuggest-accept
 # kube-ps1
 # source $ZSH_CUSTOM/plugins/kube-ps1/kube-ps1.sh
 # PROMPT='$(kube_ps1)'$PROMPT
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion

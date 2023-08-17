@@ -1,5 +1,7 @@
 all: packages symlinks git-config vundle
 
+neovim: install-neovim install-nvchad nvimrc
+
 ############################################################
 # Symlink config files into place
 ############################################################
@@ -13,6 +15,21 @@ zshrc:
 
 tmux:
 	ln -sf $(CURDIR)/.tmux.conf ${HOME}/.tmux.conf
+
+nvimrc: 
+	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
+
+############################################################
+# Install neovim
+############################################################
+install-neovim:
+	wget https://github.com/neovim/neovim/releases/download/stable/nvim.appimage
+	chmod u+x nvim.appimage
+	mv nvim.appimage /usr/local/bin/nvim
+
+# Configure via this video: https://www.youtube.com/watch?v=Mtgo-nP_r8Y
+install-nvchad:
+	git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
 
 ############################################################
 # Bash profiles (not that I use bash any more)
