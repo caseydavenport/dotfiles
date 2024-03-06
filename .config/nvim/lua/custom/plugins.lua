@@ -20,14 +20,14 @@ local plugins = {
   {
     -- tpop/X plugins for git interactions within vim.
     'tpope/vim-fugitive',
-    ft = 'go',
+    ft = '*',
     config = function(_)
     end
   },
   {
     -- Enables GBrowse in combintation with vim-fugitive.
     'tpope/vim-rhubarb',
-    ft = 'go',
+    ft = '*',
     config = function(_)
     end
   },
