@@ -61,7 +61,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
   git
-  zsh-autosuggestions 
+  zsh-autosuggestions
   zsh-syntax-highlighting
 )
 
@@ -114,9 +114,10 @@ alias kgc='set -x; kubectl get pods -n kube-system -l k8s-app=calico-node; set +
 alias kgt='set -x; kubectl get pods -n kube-system -l k8s-app=calico-typha; set +x'
 
 
-# Add local bin to path 
+# Add local bin to path
 export PATH=~/.local/bin:$PATH
 export PATH=$PATH:/usr/local/go/bin
+export PATH=$PATH:/usr/local/google-cloud-sdk/bin
 export PATH=$PATH:$GOPATH/bin
 export PATH=$PATH:$HOME/.krew/bin
 
@@ -144,3 +145,9 @@ bindkey '^k' autosuggest-accept
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/home/casey/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/casey/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
