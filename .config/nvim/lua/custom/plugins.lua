@@ -18,6 +18,13 @@ local plugins = {
     end
   },
   {
+    -- splitjoin allows easy splitting / joining of structs across multiple lines.
+    'AndrewRadev/splitjoin.vim',
+    ft = '*',
+    config = function(_)
+    end
+  },
+  {
     -- tpop/X plugins for git interactions within vim.
     'tpope/vim-fugitive',
     ft = '*',

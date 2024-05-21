@@ -151,7 +151,7 @@ set tm=50
 syntax on
 filetype plugin indent on
 
-" Toggle navigation tools. 
+" Toggle navigation tools.
 nnoremap <silent> <F1> :NERDTreeToggle<CR>
 nnoremap <silent> <F2> :TagbarToggle<CR>
 nnoremap <silent> <F9> :call NavigationToggle()<CR>
