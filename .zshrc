@@ -123,7 +123,7 @@ export PATH=$PATH:$HOME/.krew/bin
 
 
 setopt auto_cd
-cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/)
+cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/ $GOPATH/src/k8s.io)
 
 # Powerlevelk9 settings
 POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
@@ -151,3 +151,5 @@ if [ -f '/home/casey/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/c
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
