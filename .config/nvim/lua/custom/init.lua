@@ -24,3 +24,10 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
   pattern = { "*" },
   command = [[%s/\s\+$//e]],
 })
+
+-- Additional keymaps.
+vim.keymap.set("n", "<leader>k", '<cmd>lua require("kubectl").toggle()<cr>', { noremap = true, silent = true })
+
+
+-- Configure vim-test execution.
+vim.g['test#strategy'] = "neovim"

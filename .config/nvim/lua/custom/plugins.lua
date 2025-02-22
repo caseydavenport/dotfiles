@@ -62,7 +62,7 @@ local plugins = {
       vim.g.copilot_assume_mapped = true
       vim.api.nvim_set_keymap("i", "<A-p>", 'copilot#Accept("<CR>")', { silent = true, expr = true })
       vim.g.copilot_filetypes = {
-        ["*"] = false,
+        ["*"] = true,
         ["javascript"] = true,
         ["typescript"] = true,
         ["lua"] = false,
@@ -74,6 +74,24 @@ local plugins = {
         ["python"] = true,
       }
     end
-  }
+  },
+  {
+    "ramilito/kubectl.nvim",
+    config = function()
+      require("kubectl").setup()
+    end,
+  },
+  {
+    "sebdah/vim-delve",
+    ft = 'go',
+    config = function(_)
+    end
+  },
+  {
+    "vim-test/vim-test",
+    ft = 'go',
+    config = function(_)
+    end
+  },
 }
 return plugins

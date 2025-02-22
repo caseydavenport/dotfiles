@@ -7,6 +7,8 @@
      -- ["<C-K>"] = { ":bnext<CR>" },
      ["<Leader>ds"] = { "<Plug>(go-def-split)" },
      ["<Leader>dv"] = { "<Plug>(go-def-vertical)" },
+     ["<Leader>gi"] = { "<Plug>(go-implements)" },
+     ["<Leader>T"] = { ":TestNearest" },
    },
  }
 
