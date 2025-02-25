@@ -152,4 +152,4 @@ if [ -f '/home/casey/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/c
 # The next line enables shell command completion for gcloud.
 if [ -f '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+if [ -f '/home/linuxbrew/.linuxbrew/bin/brew' ]; then eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; fi
