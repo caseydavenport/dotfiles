@@ -93,5 +93,11 @@ local plugins = {
     config = function(_)
     end
   },
+  {
+      "iamcco/markdown-preview.nvim",
+      cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+      ft = { "markdown" },
+      build = ":call mkdp#util#install()",
+  },
 }
 return plugins
