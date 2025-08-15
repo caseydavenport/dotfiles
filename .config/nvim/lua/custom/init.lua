@@ -25,8 +25,12 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
   command = [[%s/\s\+$//e]],
 })
 
--- Additional keymaps.
+-- Kubectl mapping.
 vim.keymap.set("n", "<leader>k", '<cmd>lua require("kubectl").toggle()<cr>', { noremap = true, silent = true })
+
+-- Map for toggling Copilot chat in normal and select modes.
+vim.keymap.set("n", "<leader>c", '<cmd>CopilotChatToggle<cr>', { noremap = true, silent = true })
+vim.keymap.set("x", "<leader>c", '<cmd>CopilotChatToggle<cr>', { noremap = true, silent = true })
 
 
 -- Configure vim-test execution.
