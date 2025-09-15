@@ -56,7 +56,7 @@ local plugins = {
   {
     -- Install copilot.
     "github/copilot.vim",
-    ft = 'lua,go,js,py,sh,md',
+    ft = '*',
     config = function(_)
       vim.g.copilot_no_tab_map = true
       vim.g.copilot_assume_mapped = true
@@ -78,7 +78,7 @@ local plugins = {
   {
     -- https://github.com/CopilotC-Nvim/CopilotChat.nvim
     "CopilotC-Nvim/CopilotChat.nvim",
-    ft = 'lua,go,js,py,sh,md',
+    ft = '*',
     dependencies = {
       { "github/copilot.vim" }, -- or zbirenbaum/copilot.lua
       { "nvim-lua/plenary.nvim", branch = "master" }, -- for curl, log and async functions
