@@ -42,8 +42,6 @@ local plugins = {
     -- Enable language server support in NeoVim.
     'neovim/nvim-lspconfig',
     config = function(_)
-      require 'plugins.configs.lspconfig'
-      require 'custom.configs.lspconfig'
     end
   },
   {
