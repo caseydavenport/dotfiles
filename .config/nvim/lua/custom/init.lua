@@ -35,3 +35,10 @@ vim.keymap.set("x", "<leader>c", '<cmd>CopilotChatToggle<cr>', { noremap = true,
 
 -- Configure vim-test execution.
 vim.g['test#strategy'] = "neovim"
+
+-- Enable language servers.
+vim.lsp.enable("gopls")
+
+-- Configure diagnostics display settings to show virtual text inline.
+vim.diagnostic.config({ virtual_lines = false })
+vim.diagnostic.config({ virtual_text = true })
