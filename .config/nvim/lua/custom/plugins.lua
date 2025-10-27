@@ -113,5 +113,12 @@ local plugins = {
       ft = { "markdown" },
       build = ":call mkdp#util#install()",
   },
+  {
+    -- Configure nvim-tree.
+    "nvim-tree/nvim-tree.lua",
+    opts = {
+      view = { adaptive_size = true },
+    },
+  },
 }
 return plugins
