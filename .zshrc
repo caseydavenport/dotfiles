@@ -1,3 +1,10 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 export TERM="xterm-256color"
@@ -125,10 +132,6 @@ export PATH=$PATH:$HOME/.krew/bin
 setopt auto_cd
 cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/ $GOPATH/src/k8s.io)
 
-# Powerlevelk9 settings
-POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs)
-
 # Source github token for hub commands.
 source ~/.github_token
 source ~/.npm_token
@@ -154,3 +157,8 @@ if [ -f '/home/casey/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/home/c
 if [ -f '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/home/casey/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
 if [ -f '/home/linuxbrew/.linuxbrew/bin/brew' ]; then eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; fi
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
+POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs)
