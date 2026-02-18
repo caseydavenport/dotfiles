@@ -162,3 +162,6 @@ if [ -f '/home/linuxbrew/.linuxbrew/bin/brew' ]; then eval "$(/home/linuxbrew/.l
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
 POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs)
+
+# If there is a local env file, source it.
+[ -f .casey.customenv ] && source .casey.customenv
