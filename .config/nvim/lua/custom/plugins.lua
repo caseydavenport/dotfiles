@@ -14,7 +14,6 @@ local plugins = {
       vim.g.go_highlight_build_constraints = 1
       vim.g.go_def_mode = 'gopls'
       vim.g.go_info_mode = 'gopls'
-      vim.g.go_gopls_gofumpt=1
     end
   },
   {

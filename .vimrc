@@ -128,7 +128,6 @@ set noswapfile
 
 " Auto indent on new line
 set nosmartindent
-filetype plugin indent on
 
 " Show matching brackets when text indicator is over them
 set showmatch
@@ -145,11 +144,6 @@ set tm=50
 " Line break on 120 characters
 " set lbr
 " set tw=120
-
-" Execute Pathogen plugins
-" execute pathogen#infect()
-syntax on
-filetype plugin indent on
 
 " Toggle navigation tools.
 nnoremap <silent> <F1> :NERDTreeToggle<CR>
@@ -246,7 +240,6 @@ let g:go_highlight_build_constraints = 1
 " Use gopls.
 let g:go_def_mode = 'gopls'
 let g:go_info_mode = 'gopls'
-let g:ycm_gopls_binary_path = '/home/casey/repos/gopath/bin/gopls'
 let g:go_build_tags = 'fvtests'
 
 " Use strict goformatting

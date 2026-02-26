@@ -7,7 +7,7 @@ fi
 
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
-export TERM="xterm-256color"
+[[ -z "$TMUX" ]] && export TERM="xterm-256color"
 
 # Path to your oh-my-zsh installation.
 export ZSH=/home/casey/.oh-my-zsh
@@ -111,14 +111,15 @@ export GOPRIVATE=github.com/tigera/*
 
 # use nvim
 alias vim=nvim
+export EDITOR=nvim
 
 # Alias watch so that it works with other aliased commands.
 alias watch='watch '
 
 alias k='kubectl'
 alias kn='kubectl -n kube-system'
-alias kgc='set -x; kubectl get pods -n kube-system -l k8s-app=calico-node; set +x'
-alias kgt='set -x; kubectl get pods -n kube-system -l k8s-app=calico-typha; set +x'
+alias kgc='echo "+ kubectl get pods -n kube-system -l k8s-app=calico-node"; kubectl get pods -n kube-system -l k8s-app=calico-node'
+alias kgt='echo "+ kubectl get pods -n kube-system -l k8s-app=calico-typha"; kubectl get pods -n kube-system -l k8s-app=calico-typha'
 
 
 # Add local bin to path
@@ -130,11 +131,11 @@ export PATH=$PATH:$HOME/.krew/bin
 
 
 setopt auto_cd
-cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/ $GOPATH/src/k8s.io)
+cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/ $GOPATH/src/github.com/tigera $GOPATH/src/k8s.io)
 
 # Source github token for hub commands.
-source ~/.github_token
-source ~/.npm_token
+[ -f ~/.github_token ] && source ~/.github_token
+[ -f ~/.npm_token ] && source ~/.npm_token
 [ -f ~/.cherry_pick_config ] && source ~/.cherry_pick_config
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
