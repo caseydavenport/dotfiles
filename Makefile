@@ -5,14 +5,18 @@ neovim: install-neovim install-nvchad nvimrc
 ############################################################
 # Symlink config files into place
 ############################################################
-.PHONY: symlinks zshrc tmux
-symlinks: zshrc tmux
+.PHONY: symlinks zshrc tmux claude
+symlinks: zshrc tmux claude
 
 zshrc:
 	ln -sf $(CURDIR)/.zshrc ${HOME}/.zshrc
 
 tmux:
 	ln -sf $(CURDIR)/.tmux.conf ${HOME}/.tmux.conf
+
+claude:
+	mkdir -p ${HOME}/.claude
+	ln -sf $(CURDIR)/CLAUDE.md ${HOME}/.claude/CLAUDE.md
 
 nvimrc: 
 	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
