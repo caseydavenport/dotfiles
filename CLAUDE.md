@@ -32,10 +32,12 @@ Run `date` to check the current date and time.
   regardless of line length.
 - Three import groups: stdlib, third-party, internal calico packages.
 - Short receiver names: single letter matching the type.
-- `fmt.Errorf` with `%v` (not `%w`) for error wrapping unless the caller needs `errors.Is`.
+- `fmt.Errorf` with `%w` (not `%v`) for error wrapping.
 - `logrus.WithError(err)` for error logging, not inlined in format strings.
 - Comments explain "why", not "what". No comments on self-documenting code.
 - Doc comments start with the exported name: `// Foo does...`
+- Always use safe type assertions (`obj, ok := x.(*T)`) — never bare assertions that can panic.
+- Never ignore error returns. Always check and handle them, even from cache lookups or seemingly infallible calls.
 
 ## Copyright
 
@@ -44,7 +46,7 @@ Modified files: update the end year to 2026 (e.g., `2023-2026`).
 
 ## Git / PR Workflow
 
-- When asked to work on a PR or branch, and the local repo either has pending changes you didn't make or is not on master, perform the work in a new temporary git worktree under `/tmp` (e.g., `git worktree add /tmp/wt-<description> <branch>`). Clean up the worktree when done.
+- When asked to work on a PR or branch, and the local repo either has pending changes you didn't make or is not on master, perform the work in a new temporary git worktree under `/tmp` (e.g., `git worktree add /tmp/wt-<description> <branch>`). After pushing and creating the PR, clean up with `git worktree remove /tmp/wt-<description>` (use `--force` if needed for untracked files).
 - Push branches to my personal fork (`cd4` remote) for: `projectcalico/*`,
   `tigera/operator`. For other `tigera/*` repos, push to origin. For any other
   repos, check local git remotes and prefer my personal fork if it exists and
