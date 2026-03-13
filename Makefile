@@ -15,8 +15,13 @@ tmux:
 	ln -sf $(CURDIR)/.tmux.conf ${HOME}/.tmux.conf
 
 claude:
-	mkdir -p ${HOME}/.claude
+	mkdir -p ${HOME}/.claude/skills
 	ln -sf $(CURDIR)/CLAUDE.md ${HOME}/.claude/CLAUDE.md
+	@for skill in $(CURDIR)/skills/*/; do \
+		name=$$(basename $$skill); \
+		ln -sfn $$skill ${HOME}/.claude/skills/$$name; \
+		echo "Linked skill: $$name"; \
+	done
 
 nvimrc: 
 	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
