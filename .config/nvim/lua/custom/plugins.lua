@@ -117,5 +117,41 @@ local plugins = {
       view = { adaptive_size = true },
     },
   },
+  {
+    -- GitHub PR review inside neovim.
+    "caseydavenport/octo.nvim",
+    branch = "casey-unified-diff",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-telescope/telescope.nvim",
+      "nvim-tree/nvim-web-devicons",
+    },
+    cmd = "Octo",
+    config = function()
+      require("octo").setup({
+        suppress_missing_scope = {
+          projects_v2 = true,
+        },
+        reviews = {
+          diff_mode = "unified",  -- "unified" for single-pane, "split" for side-by-side
+        },
+        mappings = {
+          review_diff = {
+            add_review_comment = { lhs = "<leader>ca", desc = "add comment", mode = { "n", "x" } },
+            add_review_suggestion = { lhs = "<leader>cs", desc = "add suggestion", mode = { "n", "x" } },
+            submit_review = { lhs = "<leader>rs", desc = "submit review" },
+            discard_review = { lhs = "<leader>rd", desc = "discard review" },
+            next_thread = { lhs = "]t", desc = "next thread" },
+            prev_thread = { lhs = "[t", desc = "prev thread" },
+            select_next_entry = { lhs = "]q", desc = "next file" },
+            select_prev_entry = { lhs = "[q", desc = "prev file" },
+            focus_files = { lhs = "<leader>e", desc = "focus file panel" },
+            toggle_files = { lhs = "<leader>b", desc = "toggle file panel" },
+            close_review_tab = { lhs = "<leader>q", desc = "close review" },
+          },
+        },
+      })
+    end,
+  },
 }
 return plugins

@@ -51,6 +51,7 @@ Modified files: update the end year to 2026 (e.g., `2023-2026`).
   `tigera/operator`. For other `tigera/*` repos, push to origin. For any other
   repos, check local git remotes and prefer my personal fork if it exists and
   is pushable.
+- Branch names: use the format `casey-<2-3 word description>` (e.g., `casey-flowtable-support`, `casey-webhook-manifest`, `casey-ifupdate-race`).
 - Create new commits rather than amending unless I explicitly ask.
 - Never force push without asking first.
 - Never skip hooks (--no-verify).
