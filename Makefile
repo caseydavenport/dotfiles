@@ -1,19 +1,32 @@
+.PHONY: setup symlinks zshrc tmux claude gitconfig p10k dircolors \
+       zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
+       zsh-syntax-highlighting zsh-history-substring-search fzf \
+       terminal-bling neovim nvimrc packages apt docker help
+
+############################################################
+# Default target: show available targets
+############################################################
+help:
+	@echo "Usage: make <target>"
+	@echo ""
+	@echo "  setup          Idempotent full setup (symlinks + zsh addons + terminal bling)"
+	@echo "  symlinks       Symlink config files into ~"
+	@echo "  zsh-addons     Install oh-my-zsh, plugins, p10k, fzf"
+	@echo "  terminal-bling Install eza, bat, delta, lolcat, k8s tools (needs sudo)"
+	@echo "  neovim         Install neovim + NvChad + config symlink"
+	@echo "  packages       Install base apt packages + docker"
+	@echo ""
+
 ############################################################
 # Top-level setup: idempotent, safe to re-run on any machine
 ############################################################
-.PHONY: setup
 setup: symlinks zsh-addons terminal-bling
 	@echo ""
 	@echo "Setup complete! Run 'source ~/.zshrc' to activate."
 
-all: packages symlinks git-config
-
-neovim: install-neovim install-nvchad nvimrc
-
 ############################################################
 # Symlink config files into place
 ############################################################
-.PHONY: symlinks zshrc tmux claude gitconfig p10k dircolors
 symlinks: zshrc tmux claude gitconfig p10k dircolors
 
 zshrc:
@@ -40,79 +53,50 @@ p10k:
 dircolors:
 	ln -sf $(CURDIR)/.dircolors ${HOME}/.dircolors
 
-nvimrc: 
+nvimrc:
 	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
 
 ############################################################
-# Install neovim
+# ZSH addons
 ############################################################
-install-neovim:
-	wget https://github.com/neovim/neovim/releases/download/stable/nvim.appimage
-	chmod u+x nvim.appimage
-	mv nvim.appimage /usr/local/bin/nvim
+zsh-addons: oh-my-zsh powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search fzf
 
-# Configure via this video: https://www.youtube.com/watch?v=Mtgo-nP_r8Y
-install-nvchad:
-	git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
+oh-my-zsh:
+	@[ -d $(HOME)/.oh-my-zsh ] || (curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install-oh-my-zsh.sh && sh /tmp/install-oh-my-zsh.sh)
 
-############################################################
-# Bash profiles (not that I use bash any more)
-############################################################
-mac-bash-profile:
-	ln -sf $(CURDIR)/osx.bash.profile ${HOME}/.profile
-
-bash-profile:
-	ln -sf $(CURDIR)/bash.profile ${HOME}/.casey.profile
-
-############################################################
-# ZSH addons here
-############################################################
-zsh-addons: powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search fzf .fonts-installed
-$(HOME)/.oh-my-zsh:
-	curl -L https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install-oh-my-zsh.sh && chmod +x /tmp/install-oh-my-zsh.sh && /tmp/install-oh-my-zsh.sh
-
-powerlevel10k:
+powerlevel10k: oh-my-zsh
 	@[ -d $(HOME)/.oh-my-zsh/custom/themes/powerlevel10k ] || git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $(HOME)/.oh-my-zsh/custom/themes/powerlevel10k
 
-zsh-autosuggestions:
+zsh-autosuggestions: oh-my-zsh
 	@[ -d $(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions ] || git clone https://github.com/zsh-users/zsh-autosuggestions $(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions
 
-zsh-syntax-highlighting:
+zsh-syntax-highlighting: oh-my-zsh
 	@[ -d $(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting ] || git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting
 
-zsh-history-substring-search:
+zsh-history-substring-search: oh-my-zsh
 	@[ -d $(HOME)/.oh-my-zsh/custom/plugins/zsh-history-substring-search ] || git clone https://github.com/zsh-users/zsh-history-substring-search.git $(HOME)/.oh-my-zsh/custom/plugins/zsh-history-substring-search
 
 fzf:
 	@[ -d $(HOME)/.fzf ] || (git clone --depth 1 https://github.com/junegunn/fzf.git $(HOME)/.fzf && $(HOME)/.fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish)
 
-# TODO - Too lazy to script right now.
-.fonts-installed:
-	xdg-open https://github.com/romkatv/powerlevel10k
-	touch $@
-
 ############################################################
-# Configure git
+# Terminal bling (eza, bat, delta, lolcat, k8s tools)
 ############################################################
-git-config:
-	git config --global core.editor vim
-	git config --global user.name "Casey Davenport"
-	git config --global user.email "davenport.cas@gmail.com"
-	git config --global color.ui true
-	git config --global pager.branch false
-
-############################################################
-# Terminal bling (eza, bat, delta, lolcat)
-############################################################
-.PHONY: terminal-bling
 terminal-bling:
 	@$(CURDIR)/install-terminal-bling.sh || echo ">> terminal-bling requires sudo — run ~/install-terminal-bling.sh manually"
 
 ############################################################
-# Basic packages, and other minutia. For ease of remembering.
+# Neovim (manual, not part of setup)
 ############################################################
-.PHONY: packages apt docker lazy-boy
-packages: apt docker lazy-boy
+neovim: nvimrc
+	@command -v nvim >/dev/null || (wget -q https://github.com/neovim/neovim/releases/download/stable/nvim.appimage -O /tmp/nvim.appimage && chmod u+x /tmp/nvim.appimage && sudo mv /tmp/nvim.appimage /usr/local/bin/nvim)
+	@[ -d $(HOME)/.config/nvim/.git ] || git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
+
+############################################################
+# Base packages + docker (manual, needs sudo)
+############################################################
+packages: apt docker
+
 apt:
 	sudo apt update
 	sudo apt install -y \
@@ -124,17 +108,13 @@ apt:
 		ca-certificates \
 		curl \
 		gnupg \
-		lsb-release \
-		sl
+		lsb-release
 
 # From here: https://docs.docker.com/engine/install/ubuntu/
-docker: packages
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-	echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-	sudo apt-get update && sudo apt-get install docker-ce docker-ce-cli containerd.io
-	sudo usermod -aG docker $$USER
-
-# Too lazy to script, just open the instructions in a browser.
-lazy-boy:
-	xdg-open https://go.dev/doc/install
-	xdg-open https://slack.com
+docker:
+	@command -v docker >/dev/null || ( \
+		curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && \
+		echo "deb [arch=$$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+		sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io && \
+		sudo usermod -aG docker $$USER \
+	)
