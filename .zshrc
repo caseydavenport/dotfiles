@@ -68,8 +68,11 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
   git
+  kubectl
+  docker
   zsh-autosuggestions
   zsh-syntax-highlighting
+  zsh-history-substring-search
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -140,8 +143,30 @@ cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/ $GOPATH/src/github.com/tiger
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
+# fzf: Catppuccin Mocha colors + preview enhancements
+export FZF_DEFAULT_OPTS=" \
+  --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
+  --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
+  --color=marker:#f5e0dc,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
+  --height=40% --layout=reverse --border=rounded"
+
+# Ctrl+T: file finder with bat preview
+export FZF_CTRL_T_OPTS="--preview 'batcat --color=always --style=numbers --line-range=:200 {} 2>/dev/null || head -200 {}'"
+
+# Alt+C: cd into directory with eza tree preview
+export FZF_ALT_C_OPTS="--preview 'eza --tree --icons --level=2 --color=always {} 2>/dev/null || ls -la {}'"
+
+# Ctrl+R: history search with full command preview
+export FZF_CTRL_R_OPTS="--preview 'echo {}' --preview-window=up:3:wrap"
+
 # Auto-suggestion configuration.
 bindkey '^k' autosuggest-accept
+
+# History substring search - type partial command, then arrow up/down to match
+bindkey '^[[A' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+bindkey -M vicmd 'k' history-substring-search-up
+bindkey -M vicmd 'j' history-substring-search-down
 
 # kube-ps1
 # source $ZSH_CUSTOM/plugins/kube-ps1/kube-ps1.sh
@@ -162,7 +187,14 @@ if [ -f '/home/linuxbrew/.linuxbrew/bin/brew' ]; then eval "$(/home/linuxbrew/.l
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
-POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(dir newline vcs)
+
+# Catppuccin Mocha dircolors (ls/eza file colors)
+[ -f ~/.dircolors ] && eval "$(dircolors -b ~/.dircolors)"
+
+# Modern CLI tool aliases
+command -v batcat &>/dev/null && alias bat='batcat'  # Debian/Ubuntu names it batcat
+command -v bat &>/dev/null && alias cat='bat --paging=never --style=plain'
+command -v eza &>/dev/null && alias ls='eza --icons --group-directories-first' && alias ll='eza -la --icons --group-directories-first --git' && alias tree='eza --tree --icons'
 
 # If there is a local env file, source it.
 [ -f .casey.customenv ] && source .casey.customenv

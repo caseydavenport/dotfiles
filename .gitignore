@@ -1,4 +1,3 @@
 .fonts-installed
 install-oh-my-zsh.sh
 nvim.appimage
-.p10k.zsh

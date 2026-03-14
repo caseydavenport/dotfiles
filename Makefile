@@ -1,3 +1,11 @@
+############################################################
+# Top-level setup: idempotent, safe to re-run on any machine
+############################################################
+.PHONY: setup
+setup: symlinks zsh-addons terminal-bling
+	@echo ""
+	@echo "Setup complete! Run 'source ~/.zshrc' to activate."
+
 all: packages symlinks git-config
 
 neovim: install-neovim install-nvchad nvimrc
@@ -5,8 +13,8 @@ neovim: install-neovim install-nvchad nvimrc
 ############################################################
 # Symlink config files into place
 ############################################################
-.PHONY: symlinks zshrc tmux claude
-symlinks: zshrc tmux claude
+.PHONY: symlinks zshrc tmux claude gitconfig p10k dircolors
+symlinks: zshrc tmux claude gitconfig p10k dircolors
 
 zshrc:
 	ln -sf $(CURDIR)/.zshrc ${HOME}/.zshrc
@@ -22,6 +30,15 @@ claude:
 		ln -sfn $$skill ${HOME}/.claude/skills/$$name; \
 		echo "Linked skill: $$name"; \
 	done
+
+gitconfig:
+	ln -sf $(CURDIR)/.gitconfig ${HOME}/.gitconfig
+
+p10k:
+	ln -sf $(CURDIR)/.p10k.zsh ${HOME}/.p10k.zsh
+
+dircolors:
+	ln -sf $(CURDIR)/.dircolors ${HOME}/.dircolors
 
 nvimrc: 
 	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
@@ -50,24 +67,24 @@ bash-profile:
 ############################################################
 # ZSH addons here
 ############################################################
-zsh-addons: powerlevel10k zsh-autosuggestions zsh-syntax-highlighting .fonts-installed
-$(HOME)/.oh-my-zsh: install.sh
-	./install-oh-my-zsh.sh
+zsh-addons: powerlevel10k zsh-autosuggestions zsh-syntax-highlighting zsh-history-substring-search fzf .fonts-installed
+$(HOME)/.oh-my-zsh:
+	curl -L https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o /tmp/install-oh-my-zsh.sh && chmod +x /tmp/install-oh-my-zsh.sh && /tmp/install-oh-my-zsh.sh
 
-install-oh-my-zsh.sh:
-	curl -L https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o $@ && chmod +x $@
+powerlevel10k:
+	@[ -d $(HOME)/.oh-my-zsh/custom/themes/powerlevel10k ] || git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $(HOME)/.oh-my-zsh/custom/themes/powerlevel10k
 
-powerlevel10k: $(HOME)/.oh-my-zsh/custom/themes/powerlevel10k
-$(HOME)/.oh-my-zsh/custom/themes/powerlevel10k: $(HOME)/.oh-my-zsh
-	git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $@
+zsh-autosuggestions:
+	@[ -d $(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions ] || git clone https://github.com/zsh-users/zsh-autosuggestions $(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions
 
-zsh-autosuggestions: $(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions
-$(HOME)/.oh-my-zsh/plugins/zsh-autosuggestions: $(HOME)/.oh-my-zsh
-	git clone https://github.com/zsh-users/zsh-autosuggestions $@
+zsh-syntax-highlighting:
+	@[ -d $(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting ] || git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting
 
-zsh-syntax-highlighting: $(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting
-$(HOME)/.oh-my-zsh/plugins/zsh-syntax-highlighting: $(HOME)/.oh-my-zsh
-	git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${HOME}/.oh-my-zsh/plugins/zsh-syntax-highlighting
+zsh-history-substring-search:
+	@[ -d $(HOME)/.oh-my-zsh/custom/plugins/zsh-history-substring-search ] || git clone https://github.com/zsh-users/zsh-history-substring-search.git $(HOME)/.oh-my-zsh/custom/plugins/zsh-history-substring-search
+
+fzf:
+	@[ -d $(HOME)/.fzf ] || (git clone --depth 1 https://github.com/junegunn/fzf.git $(HOME)/.fzf && $(HOME)/.fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish)
 
 # TODO - Too lazy to script right now.
 .fonts-installed:
@@ -83,6 +100,13 @@ git-config:
 	git config --global user.email "davenport.cas@gmail.com"
 	git config --global color.ui true
 	git config --global pager.branch false
+
+############################################################
+# Terminal bling (eza, bat, delta, lolcat)
+############################################################
+.PHONY: terminal-bling
+terminal-bling:
+	@$(CURDIR)/install-terminal-bling.sh || echo ">> terminal-bling requires sudo — run ~/install-terminal-bling.sh manually"
 
 ############################################################
 # Basic packages, and other minutia. For ease of remembering.
