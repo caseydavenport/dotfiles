@@ -87,12 +87,6 @@ local plugins = {
     -- See Commands section for default commands if you want to lazy load on them
   },
   {
-    "ramilito/kubectl.nvim",
-    config = function()
-      require("kubectl").setup()
-    end,
-  },
-  {
     "sebdah/vim-delve",
     ft = 'go',
     config = function(_)
@@ -152,6 +146,141 @@ local plugins = {
         },
       })
     end,
+  },
+  ---------------------------------------------------------------
+  -- Visual polish
+  ---------------------------------------------------------------
+  {
+    -- Smooth scrolling.
+    "karb94/neoscroll.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("neoscroll").setup({
+        mappings = { '<C-u>', '<C-d>', '<C-b>', '<C-f>', 'zt', 'zz', 'zb' },
+        hide_cursor = true,
+        stop_eof = true,
+        respect_scrolloff = false,
+        cursor_scrolls_alone = true,
+      })
+    end,
+  },
+  ---------------------------------------------------------------
+  -- Telescope extensions
+  ---------------------------------------------------------------
+  {
+    -- Native fzf sorter for telescope (much faster fuzzy matching).
+    "nvim-telescope/telescope-fzf-native.nvim",
+    build = "make",
+    config = function()
+      require("telescope").load_extension("fzf")
+    end,
+  },
+  {
+    -- Pass ripgrep flags interactively in live grep.
+    "nvim-telescope/telescope-live-grep-args.nvim",
+    config = function()
+      require("telescope").load_extension("live_grep_args")
+    end,
+  },
+  ---------------------------------------------------------------
+  -- Diagnostics
+  ---------------------------------------------------------------
+  {
+    -- Pretty diagnostics list panel.
+    "folke/trouble.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    cmd = "Trouble",
+    config = function()
+      require("trouble").setup({
+        auto_preview = false,
+        win = {
+          type = "split",
+          position = "right",
+          size = 0.3,
+        },
+        -- Don't override built-in diagnostic virtual text.
+        modes = {
+          diagnostics = {
+            auto_open = false,
+            auto_close = false,
+          },
+        },
+      })
+    end,
+  },
+  ---------------------------------------------------------------
+  -- Navigation
+  ---------------------------------------------------------------
+  {
+    -- Bookmark and jump between files you're actively working on.
+    "ThePrimeagen/harpoon",
+    branch = "harpoon2",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      require("harpoon"):setup()
+    end,
+  },
+  ---------------------------------------------------------------
+  -- Go test coverage overlay
+  ---------------------------------------------------------------
+  {
+    -- Show covered/uncovered lines after running go test.
+    "rafaelsq/nvim-goc.lua",
+    ft = "go",
+    config = function()
+      require("nvim-goc").setup()
+    end,
+  },
+  ---------------------------------------------------------------
+  -- TODO/FIXME/HACK highlighting and search
+  ---------------------------------------------------------------
+  {
+    "folke/todo-comments.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    event = "VeryLazy",
+    config = function()
+      require("todo-comments").setup()
+    end,
+  },
+  ---------------------------------------------------------------
+  -- Session persistence (auto-save/restore per project)
+  ---------------------------------------------------------------
+  {
+    "folke/persistence.nvim",
+    event = "BufReadPre",
+    config = function()
+      require("persistence").setup({
+        dir = vim.fn.stdpath("state") .. "/sessions/",
+      })
+    end,
+  },
+  ---------------------------------------------------------------
+  -- Debug adapter (nvim-dap + Go support)
+  ---------------------------------------------------------------
+  {
+    "mfussenegger/nvim-dap",
+    dependencies = {
+      -- Go debug adapter using delve.
+      {
+        "leoluz/nvim-dap-go",
+        config = function()
+          require("dap-go").setup()
+        end,
+      },
+      -- UI for dap: variable inspection, breakpoints, call stack.
+      {
+        "rcarriga/nvim-dap-ui",
+        dependencies = { "nvim-neotest/nvim-nio" },
+        config = function()
+          local dap, dapui = require("dap"), require("dapui")
+          dapui.setup()
+          -- Auto-open/close the UI when debugging starts/stops.
+          dap.listeners.after.event_initialized["dapui_config"] = function() dapui.open() end
+          dap.listeners.before.event_terminated["dapui_config"] = function() dapui.close() end
+          dap.listeners.before.event_exited["dapui_config"] = function() dapui.close() end
+        end,
+      },
+    },
   },
 }
 return plugins
