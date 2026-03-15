@@ -79,20 +79,108 @@ end, 100)
 vim.g['test#strategy'] = "neovim"
 
 ---------------------------------------------------------------
--- Keybinding overrides
+-- Which-key group labels
 ---------------------------------------------------------------
 
+-- Register after plugins load so which-key is available.
+vim.api.nvim_create_autocmd("User", {
+  pattern = "LazyDone",
+  callback = function()
+    local ok, wk = pcall(require, "which-key")
+    if ok then
+      wk.add({
+        -- Top-level groups with icons.
+        { "<leader>a", group = "AI", icon = "󰚩" },
+        { "<leader>c", group = "Copilot Chat", icon = "" },
+        { "<leader>d", group = "Debug", icon = "" },
+        { "<leader>f", group = "Find", icon = "" },
+        { "<leader>g", group = "Go / Git", icon = "" },
+        { "<leader>gc", group = "Coverage", icon = "󰈸" },
+        { "<leader>h", group = "Bookmarks", icon = "󰃀" },
+        { "<leader>q", group = "Sessions", icon = "󰆓" },
+        { "<leader>r", group = "Review", icon = "" },
+        { "<leader>x", group = "Diagnostics", icon = "" },
+
+        -- NvChad telescope bindings with descriptions.
+        { "<leader>ff", desc = "Find files" },
+        { "<leader>fa", desc = "Find all files" },
+        { "<leader>fw", desc = "Live grep" },
+        { "<leader>fb", desc = "Find buffers" },
+        { "<leader>fh", desc = "Help tags" },
+        { "<leader>fo", desc = "Find recent files" },
+        { "<leader>fz", desc = "Find in current buffer" },
+
+        -- Git bindings.
+        { "<leader>gs", desc = "Git status" },
+        { "<leader>gcm", desc = "Git commits" },
+        { "<leader>gbl", desc = "Git blame line" },
+        { "<leader>gbr", desc = "Open on GitHub" },
+
+        -- Hide remapped/unused bindings from which-key.
+        { "<leader>gt", hidden = true },
+        { "<leader>gb", hidden = true },
+        { "<leader>cm", hidden = true },
+        { "<leader>ma", hidden = true },
+        { "<leader>th", hidden = true },
+        { "<leader>c", hidden = true },
+
+        -- Gitsigns bindings.
+        { "<leader>p", group = "Git preview", icon = "" },
+        { "<leader>ph", desc = "Preview hunk" },
+        { "<leader>td", desc = "Toggle deleted lines" },
+
+        -- LSP workspace bindings.
+        { "<leader>w", group = "Workspace", icon = "" },
+        { "<leader>wa", desc = "Add workspace folder" },
+        { "<leader>wr", desc = "Remove workspace folder" },
+        { "<leader>wl", desc = "List workspace folders" },
+
+        -- NvChad misc bindings.
+        { "<leader>e", desc = "File tree focus" },
+        { "<leader>b", desc = "Toggle file tree" },
+        { "<leader>ch", desc = "Keybinding cheatsheet" },
+        { "<leader>n", desc = "Line numbers" },
+        { "<leader>/", desc = "Toggle comment" },
+      })
+
+      -- Unbind things we don't use.
+      pcall(vim.keymap.del, "n", "<leader>ma")
+      pcall(vim.keymap.del, "n", "<leader>th")
+      pcall(vim.keymap.del, "n", "<leader>cm")
+      pcall(vim.keymap.del, "n", "<leader>gt")
+      pcall(vim.keymap.del, "n", "<leader>gb")
+      pcall(vim.keymap.del, "n", "<leader>c")
+      pcall(vim.keymap.del, "x", "<leader>c")
+    end
+  end,
+  once = true,
+})
+
+-- Move telescope marks/bookmarks to <leader>fk.
+vim.keymap.set("n", "<leader>fk", "<cmd>Telescope marks<cr>", { desc = "Find marks" })
+
+-- Git bindings under <leader>g.
+vim.keymap.set("n", "<leader>gs", "<cmd>Telescope git_status<cr>", { desc = "Git status" })
+vim.keymap.set("n", "<leader>gcm", "<cmd>Telescope git_commits<cr>", { desc = "Git commits" })
+vim.keymap.set("n", "<leader>gbl", function() package.loaded.gitsigns.blame_line() end, { desc = "Git blame line" })
+vim.keymap.set("n", "<leader>gbr", "<cmd>GBrowse<cr>", { desc = "Open on GitHub" })
+
+-- Move copilot chat to <leader>ac (under AI group).
+vim.keymap.set("n", "<leader>ac", "<cmd>CopilotChatToggle<cr>", { desc = "Copilot Chat" })
+vim.keymap.set("x", "<leader>ac", "<cmd>CopilotChatToggle<cr>", { desc = "Copilot Chat" })
 
 ---------------------------------------------------------------
 -- Claude Code floating terminal
 ---------------------------------------------------------------
 
--- Open Claude Code in a centered floating window.
-vim.keymap.set("n", "<leader>ai", function()
+-- Toggle Claude Code in a floating window. Reuses the same session.
+local claude_buf = nil
+local claude_win = nil
+
+local function open_claude_float()
   local width = math.floor(vim.o.columns * 0.85)
   local height = math.floor(vim.o.lines * 0.85)
-  local buf = vim.api.nvim_create_buf(false, true)
-  local win = vim.api.nvim_open_win(buf, true, {
+  local opts = {
     relative = "editor",
     width = width,
     height = height,
@@ -100,18 +188,38 @@ vim.keymap.set("n", "<leader>ai", function()
     row = math.floor((vim.o.lines - height) / 2),
     style = "minimal",
     border = "rounded",
+  }
+
+  -- If we have a live buffer, just re-show it.
+  if claude_buf and vim.api.nvim_buf_is_valid(claude_buf) then
+    claude_win = vim.api.nvim_open_win(claude_buf, true, opts)
+    vim.cmd("startinsert")
+    return
+  end
+
+  -- Otherwise, create a new buffer and start claude.
+  claude_buf = vim.api.nvim_create_buf(false, true)
+  claude_win = vim.api.nvim_open_win(claude_buf, true, opts)
+  vim.fn.termopen("claude", {
+    on_exit = function()
+      claude_buf = nil
+      claude_win = nil
+    end,
   })
-  vim.fn.termopen("claude", { on_exit = function() vim.api.nvim_win_close(win, true) end })
   vim.cmd("startinsert")
-end, { desc = "Open Claude Code" })
+end
 
----------------------------------------------------------------
--- Plugin keybindings: copilot
----------------------------------------------------------------
+local function toggle_claude()
+  if claude_win and vim.api.nvim_win_is_valid(claude_win) then
+    vim.api.nvim_win_close(claude_win, false)
+    claude_win = nil
+    return
+  end
+  open_claude_float()
+end
 
--- Toggle Copilot chat in normal and visual modes.
-vim.keymap.set("n", "<leader>c", '<cmd>CopilotChatToggle<cr>', { noremap = true, silent = true })
-vim.keymap.set("x", "<leader>c", '<cmd>CopilotChatToggle<cr>', { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>ai", toggle_claude, { desc = "Toggle Claude Code" })
+vim.keymap.set("t", "<C-\\><C-a>", toggle_claude, { desc = "Toggle Claude Code" })
 
 ---------------------------------------------------------------
 -- Plugin keybindings: trouble (diagnostics panel)
