@@ -196,5 +196,9 @@ command -v batcat &>/dev/null && alias bat='batcat'  # Debian/Ubuntu names it ba
 command -v bat &>/dev/null && alias cat='bat --paging=never --style=plain'
 command -v eza &>/dev/null && alias ls='eza --icons --group-directories-first' && alias ll='eza -la --icons --group-directories-first --git' && alias tree='eza --tree --icons'
 
+# zoxide: smarter cd that learns your most-used directories.
+# Use "z <partial>" to jump, "zi" for interactive fuzzy selection.
+command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
+
 # If there is a local env file, source it.
 [ -f .casey.customenv ] && source .casey.customenv

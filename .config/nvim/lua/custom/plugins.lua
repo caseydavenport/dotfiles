@@ -166,6 +166,22 @@ local plugins = {
     end,
   },
   ---------------------------------------------------------------
+  -- Jump navigation
+  ---------------------------------------------------------------
+  {
+    -- Jump to any visible character in 2 keystrokes.
+    -- Press s + target char, then type the highlighted label.
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    keys = {
+      { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash jump" },
+      { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash treesitter" },
+    },
+    config = function()
+      require("flash").setup()
+    end,
+  },
+  ---------------------------------------------------------------
   -- Visual polish
   ---------------------------------------------------------------
   {
