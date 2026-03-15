@@ -148,6 +148,24 @@ local plugins = {
     end,
   },
   ---------------------------------------------------------------
+  -- Tmux integration
+  ---------------------------------------------------------------
+  {
+    -- Seamless Alt+h/j/k/l navigation across vim splits and tmux panes.
+    "christoomey/vim-tmux-navigator",
+    lazy = false,
+    init = function()
+      -- Disable default Ctrl bindings, we'll use Alt instead.
+      vim.g.tmux_navigator_no_mappings = 1
+    end,
+    config = function()
+      vim.keymap.set("n", "<M-h>", "<cmd>TmuxNavigateLeft<cr>", { desc = "Navigate left" })
+      vim.keymap.set("n", "<M-j>", "<cmd>TmuxNavigateDown<cr>", { desc = "Navigate down" })
+      vim.keymap.set("n", "<M-k>", "<cmd>TmuxNavigateUp<cr>", { desc = "Navigate up" })
+      vim.keymap.set("n", "<M-l>", "<cmd>TmuxNavigateRight<cr>", { desc = "Navigate right" })
+    end,
+  },
+  ---------------------------------------------------------------
   -- Visual polish
   ---------------------------------------------------------------
   {
