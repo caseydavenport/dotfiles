@@ -151,6 +151,7 @@ vim.api.nvim_create_autocmd("User", {
       pcall(vim.keymap.del, "n", "<leader>gb")
       pcall(vim.keymap.del, "n", "<leader>c")
       pcall(vim.keymap.del, "x", "<leader>c")
+
     end
   end,
   once = true,
