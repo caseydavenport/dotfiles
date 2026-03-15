@@ -9,14 +9,16 @@
      ["<Leader>T"] = { ":TestNearest" },
 
      -- Override NvChad terminal toggles, free Alt+h for tmux navigation.
+     -- Override NvChad Alt+h, free it for tmux navigation.
      ["<A-h>"] = { "<cmd>TmuxNavigateLeft<cr>", "Navigate left" },
-     ["<A-v>"] = { "<cmd>TmuxNavigateRight<cr>", "Navigate right" },
-     ["<A-t>"] = { function() require("nvterm.terminal").toggle("horizontal") end, "Toggle terminal" },
+     -- Terminal toggles.
+     ["<A-t>"] = { function() require("nvterm.terminal").toggle("horizontal") end, "Horizontal terminal" },
+     ["<A-v>"] = { function() require("nvterm.terminal").toggle("vertical") end, "Vertical terminal" },
    },
    t = {
      ["<A-h>"] = { "<cmd>TmuxNavigateLeft<cr>", "Navigate left" },
-     ["<A-v>"] = { "<cmd>TmuxNavigateRight<cr>", "Navigate right" },
-     ["<A-t>"] = { function() require("nvterm.terminal").toggle("horizontal") end, "Toggle terminal" },
+     ["<A-t>"] = { function() require("nvterm.terminal").toggle("horizontal") end, "Horizontal terminal" },
+     ["<A-v>"] = { function() require("nvterm.terminal").toggle("vertical") end, "Vertical terminal" },
    },
  }
 

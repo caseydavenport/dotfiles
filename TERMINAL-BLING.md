@@ -20,7 +20,7 @@ Run `~/install-terminal-bling.sh` and `source ~/.zshrc`, then try these out.
 
 ## delta (replaces git diff)
 
-- `git diff` — side-by-side diffs with syntax highlighting
+- `git diff` — unified diffs with syntax highlighting and line numbers
 - `git log -p` — commit history with pretty diffs
 - `git show HEAD` — all go through delta automatically
 
@@ -31,10 +31,17 @@ Run `~/install-terminal-bling.sh` and `source ~/.zshrc`, then try these out.
 
 ## fzf (fuzzy finder)
 
-- `Ctrl+R` — fuzzy history search with preview
+- `Ctrl+R` — fuzzy history search with preview (use arrow keys to cycle matches)
 - `Ctrl+T` — fuzzy file finder with bat syntax-highlighted preview
 - `Alt+C` — fuzzy directory picker with eza tree preview
 - Catppuccin Mocha colors applied to all fzf popups
+
+## zoxide (smart cd)
+
+- `z calico` — jump to most-visited directory matching "calico"
+- `z proj cal` — matches on multiple words
+- `zi` — interactive fuzzy picker
+- Learns as you `cd` around, gets smarter over time
 
 ## history substring search
 
@@ -83,3 +90,7 @@ Consistent palette across all tools:
 - Fast escape time (10ms) for snappy vim
 - True color (24-bit) and undercurl support
 - Focus events for vim autoread
+- `Alt+h/j/k/l` — seamless pane navigation across vim and tmux (vim-tmux-navigator)
+- `prefix + H/J/K/L` — resize panes by 5 cells
+- `prefix + Ctrl+arrow` — resize panes by 1 cell
+- Transient prompt (p10k) — old prompts collapse, reappears on `cd`

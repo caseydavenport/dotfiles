@@ -4,17 +4,22 @@ NvChad + Catppuccin Mocha + custom plugins for Go development.
 
 ## Keybindings
 
-NvChad's leader key is `Space`.
+NvChad's leader key is `Space`. Press it and wait to see which-key groups with icons.
 
 ### Navigation
 
 | Key | Action |
 |-----|--------|
+| `Enter` | Flash jump — type a char, then a label to jump |
+| `Shift+Enter` | Flash treesitter select |
+| `Alt+h/j/k/l` | Move between vim splits and tmux panes |
 | `<leader>ha` | Add current file to harpoon |
 | `<leader>hh` | Open harpoon quick menu (edit with `dd`, save with `:wq`) |
 | `<leader>1-4` | Jump to harpoon file 1-4 |
 | `<leader>e` | Focus file panel (nvim-tree) |
 | `<leader>b` | Toggle file panel |
+| `Tab` / `Shift+Tab` | Next/prev buffer |
+| `<leader>x` | Close current buffer |
 
 ### Search (Telescope)
 
@@ -26,6 +31,9 @@ NvChad's leader key is `Space`.
 | `<leader>fb` | Find buffers |
 | `<leader>fh` | Help tags |
 | `<leader>fa` | Find all files (including hidden/ignored) |
+| `<leader>fo` | Find recent files |
+| `<leader>fz` | Fuzzy find in current buffer |
+| `<leader>fk` | Find marks/bookmarks |
 | `<leader>ft` | Find all TODOs/FIXMEs/HACKs in project |
 
 ### Go development
@@ -69,16 +77,19 @@ NvChad's leader key is `Space`.
 
 | Key | Action |
 |-----|--------|
-| `:G` | Fugitive git status |
-| `:Gblame` | Inline git blame |
-| `:GBrowse` | Open current file on GitHub |
-| `:Octo pr list` | List PRs for review |
-| `[c` / `]c` | Previous/next git hunk (gitsigns) |
+| `<leader>gs` | Git status (telescope) |
+| `<leader>gcm` | Git commits (telescope) |
+| `<leader>gbl` | Blame current line |
+| `<leader>gbr` | Open current file on GitHub |
+| `<leader>ph` | Preview git hunk |
+| `<leader>td` | Toggle showing deleted lines |
+| `[c` / `]c` | Previous/next git hunk |
 
 ### Octo (PR review)
 
 | Key | Action |
 |-----|--------|
+| `:Octo pr list` | List PRs for review |
 | `<leader>ca` | Add review comment |
 | `<leader>cs` | Add review suggestion |
 | `<leader>rs` | Submit review |
@@ -98,22 +109,49 @@ NvChad's leader key is `Space`.
 
 | Key | Action |
 |-----|--------|
-| `<leader>ai` | Open Claude Code in a floating terminal |
+| `<leader>ai` | Toggle Claude Code floating terminal (resumeable) |
+| `Ctrl+\ Ctrl+a` | Hide Claude float from terminal mode |
+| `<leader>ac` | Toggle Copilot Chat |
 | `Alt+p` | Accept Copilot suggestion (insert mode) |
-| `<leader>c` | Toggle Copilot Chat |
+
+### Terminal
+
+| Key | Action |
+|-----|--------|
+| `Alt+t` | Toggle horizontal terminal |
+| `Alt+v` | Toggle vertical terminal |
 
 ### Misc
 
 | Key | Action |
 |-----|--------|
 | `<leader>ch` | NvChad keybinding cheatsheet |
+| `<leader>n` | Toggle line numbers |
+| `<leader>/` | Toggle comment |
 | `:MarkdownPreview` | Live preview of markdown files |
+
+## Which-key groups
+
+Press `<leader>` to see these organized groups:
+
+- 󰚩 **AI** — Claude Code, Copilot Chat
+- 󰃀 **Bookmarks** — Harpoon file bookmarks
+-  **Debug** — Breakpoints, stepping, REPL
+-  **Diagnostics** — Trouble panel, quickfix
+-  **Find** — All telescope search bindings
+-  **Go / Git** — Go tools, coverage, git status/commits/blame
+-  **Git preview** — Hunk preview, deleted lines
+- 󰆓 **Sessions** — Save/restore project sessions
+-  **Review** — Octo PR review
+-  **Workspace** — LSP workspace folders
 
 ## Plugins
 
 - **vim-go** -- Go highlighting, formatting (gofumpt), gopls integration
 - **nvim-lspconfig** -- LSP support (gopls enabled)
 - **nvim-dap + nvim-dap-go + nvim-dap-ui** -- Debugger with breakpoints, stepping, variable inspection
+- **flash.nvim** -- Jump to any visible character in 2 keystrokes
+- **vim-tmux-navigator** -- Seamless Alt+h/j/k/l across vim splits and tmux panes
 - **copilot + CopilotChat** -- AI completions and chat
 - **octo.nvim** -- GitHub PR review inside neovim (unified diff mode)
 - **vim-fugitive + vim-rhubarb** -- Git commands and GitHub integration
