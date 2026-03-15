@@ -174,8 +174,8 @@ local plugins = {
     "folke/flash.nvim",
     event = "VeryLazy",
     keys = {
-      { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash jump" },
-      { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash treesitter" },
+      { "<CR>", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash jump" },
+      { "<S-CR>", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash treesitter" },
     },
     config = function()
       require("flash").setup()
