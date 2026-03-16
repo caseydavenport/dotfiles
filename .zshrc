@@ -123,6 +123,12 @@ alias k='kubectl'
 alias kn='kubectl -n kube-system'
 alias kgc='echo "+ kubectl get pods -n kube-system -l k8s-app=calico-node"; kubectl get pods -n kube-system -l k8s-app=calico-node'
 alias kgt='echo "+ kubectl get pods -n kube-system -l k8s-app=calico-typha"; kubectl get pods -n kube-system -l k8s-app=calico-typha'
+alias kl='kubectl logs -f'
+alias kex='kubectl exec -it'
+alias kaf='kubectl apply -f'
+
+# Use kubecolor for colorized kubectl output if available.
+command -v kubecolor &>/dev/null && alias kubectl='kubecolor' && alias k='kubecolor'
 
 
 # Add local bin to path
