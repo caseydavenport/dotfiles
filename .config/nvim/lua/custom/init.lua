@@ -94,8 +94,20 @@ vim.api.nvim_create_autocmd("User", {
         { "<leader>c", group = "Copilot Chat", icon = "" },
         { "<leader>d", group = "Debug", icon = "" },
         { "<leader>f", group = "Find", icon = "" },
-        { "<leader>g", group = "Go / Git", icon = "" },
+        { "<leader>g", group = "Go", icon = "" },
         { "<leader>gc", group = "Coverage", icon = "󰈸" },
+        { "<leader>gs", desc = "Highlight identifier" },
+        { "<leader>gS", desc = "Clear identifier highlight" },
+        { "<leader>gi", desc = "Show implementations" },
+        { "<leader>gI", desc = "Generate method stubs" },
+        { "<leader>gr", desc = "Find references" },
+        { "<leader>gf", desc = "Fill struct" },
+        { "<leader>ge", desc = "Generate if err" },
+        { "<leader>gk", desc = "Show callers" },
+        { "<leader>gn", desc = "Rename identifier" },
+        { "<leader>gd", desc = "Go doc" },
+        { "<leader>gD", desc = "Go doc (browser)" },
+        { "<leader>v", group = "VCS", icon = "" },
         { "<leader>h", group = "Bookmarks", icon = "󰃀" },
         { "<leader>q", group = "Sessions", icon = "󰆓" },
         { "<leader>r", group = "Review", icon = "" },
@@ -108,17 +120,18 @@ vim.api.nvim_create_autocmd("User", {
         { "<leader>fb", desc = "Find buffers" },
         { "<leader>fh", desc = "Help tags" },
         { "<leader>fo", desc = "Find recent files" },
+        { "<leader>fs", desc = "Find word under cursor" },
         { "<leader>fz", desc = "Find in current buffer" },
 
-        -- Git bindings.
-        { "<leader>gs", desc = "Git status" },
-        { "<leader>gcm", desc = "Git commits" },
-        { "<leader>gbl", desc = "Git blame line" },
-        { "<leader>gbr", desc = "Open on GitHub" },
+        -- VCS bindings.
+        { "<leader>vs", desc = "Git status" },
+        { "<leader>vcm", desc = "Git commits" },
+        { "<leader>vbl", desc = "Git blame line" },
+        { "<leader>vbr", desc = "Open on GitHub" },
 
         -- Hide remapped/unused bindings from which-key.
-        { "<leader>gt", hidden = true },
-        { "<leader>gb", hidden = true },
+        { "<leader>vt", hidden = true },
+        { "<leader>vb", hidden = true },
         { "<leader>cm", hidden = true },
         { "<leader>ma", hidden = true },
         { "<leader>th", hidden = true },
@@ -147,8 +160,8 @@ vim.api.nvim_create_autocmd("User", {
       pcall(vim.keymap.del, "n", "<leader>ma")
       pcall(vim.keymap.del, "n", "<leader>th")
       pcall(vim.keymap.del, "n", "<leader>cm")
-      pcall(vim.keymap.del, "n", "<leader>gt")
-      pcall(vim.keymap.del, "n", "<leader>gb")
+      pcall(vim.keymap.del, "n", "<leader>vt")
+      pcall(vim.keymap.del, "n", "<leader>vb")
       pcall(vim.keymap.del, "n", "<leader>c")
       pcall(vim.keymap.del, "x", "<leader>c")
 
@@ -160,11 +173,11 @@ vim.api.nvim_create_autocmd("User", {
 -- Move telescope marks/bookmarks to <leader>fk.
 vim.keymap.set("n", "<leader>fk", "<cmd>Telescope marks<cr>", { desc = "Find marks" })
 
--- Git bindings under <leader>g.
-vim.keymap.set("n", "<leader>gs", "<cmd>Telescope git_status<cr>", { desc = "Git status" })
-vim.keymap.set("n", "<leader>gcm", "<cmd>Telescope git_commits<cr>", { desc = "Git commits" })
-vim.keymap.set("n", "<leader>gbl", function() package.loaded.gitsigns.blame_line() end, { desc = "Git blame line" })
-vim.keymap.set("n", "<leader>gbr", "<cmd>GBrowse<cr>", { desc = "Open on GitHub" })
+-- VCS bindings under <leader>v.
+vim.keymap.set("n", "<leader>vs", "<cmd>Telescope git_status<cr>", { desc = "Git status" })
+vim.keymap.set("n", "<leader>vcm", "<cmd>Telescope git_commits<cr>", { desc = "Git commits" })
+vim.keymap.set("n", "<leader>vbl", function() package.loaded.gitsigns.blame_line() end, { desc = "Git blame line" })
+vim.keymap.set("n", "<leader>vbr", "<cmd>GBrowse<cr>", { desc = "Open on GitHub" })
 
 -- Move copilot chat to <leader>ac (under AI group).
 vim.keymap.set("n", "<leader>ac", "<cmd>CopilotChatToggle<cr>", { desc = "Copilot Chat" })
@@ -247,6 +260,25 @@ vim.keymap.set("n", "<leader>4", function() require("harpoon"):list():select(4) 
 
 -- Live grep with ripgrep args (e.g., append "-t go" to only search Go files).
 vim.keymap.set("n", "<leader>fg", function() require("telescope").extensions.live_grep_args.live_grep_args() end, { desc = "Live grep (with rg args)" })
+
+-- Go bindings under <leader>g.
+vim.keymap.set("n", "<leader>gs", "<cmd>GoSameIds<cr>", { desc = "Highlight identifier" })
+vim.keymap.set("n", "<leader>gS", "<cmd>GoSameIdsClear<cr>", { desc = "Clear identifier highlight" })
+vim.keymap.set("n", "<leader>gi", "<cmd>GoImplements<cr>", { desc = "Show implementations" })
+vim.keymap.set("n", "<leader>gI", ":GoImpl ", { desc = "Generate method stubs" })
+vim.keymap.set("n", "<leader>gr", "<cmd>GoReferrers<cr>", { desc = "Find references" })
+vim.keymap.set("n", "<leader>gf", "<cmd>GoFillStruct<cr>", { desc = "Fill struct" })
+vim.keymap.set("n", "<leader>ge", "<cmd>GoIfErr<cr>", { desc = "Generate if err" })
+vim.keymap.set("n", "<leader>gk", "<cmd>GoCallers<cr>", { desc = "Show callers" })
+vim.keymap.set("n", "<leader>gn", "<cmd>GoRename<cr>", { desc = "Rename identifier" })
+vim.keymap.set("n", "<leader>gd", "<cmd>GoDoc<cr>", { desc = "Go doc" })
+vim.keymap.set("n", "<leader>gD", "<cmd>GoDocBrowser<cr>", { desc = "Go doc (browser)" })
+
+-- Grep for word under cursor via Telescope.
+vim.keymap.set("n", "<leader>fs", function() require("telescope.builtin").grep_string() end, { desc = "Find word under cursor" })
+
+-- Clear search highlight with double-escape.
+vim.keymap.set("n", "<Esc><Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
 
 ---------------------------------------------------------------
 -- Plugin keybindings: Go test coverage

@@ -106,9 +106,6 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 #
-#
-# alias to start go programming.
-alias letsgo='cd $GOPATH/src && printf "\nChanged to: $(pwd)\n"'
 export GOPATH=/home/casey/repos/gopath
 export GOPRIVATE=github.com/tigera/*
 
@@ -120,12 +117,26 @@ export EDITOR=nvim
 alias watch='watch '
 
 alias k='kubectl'
-alias kn='kubectl -n kube-system'
-alias kgc='echo "+ kubectl get pods -n kube-system -l k8s-app=calico-node"; kubectl get pods -n kube-system -l k8s-app=calico-node'
-alias kgt='echo "+ kubectl get pods -n kube-system -l k8s-app=calico-typha"; kubectl get pods -n kube-system -l k8s-app=calico-typha'
+alias kn='kubectl -n calico-system'
+alias kgc='echo "+ kubectl get pods -n calico-system -l k8s-app=calico-node"; kubectl get pods -n calico-system -l k8s-app=calico-node'
+alias kgt='echo "+ kubectl get pods -n calico-system -l k8s-app=calico-typha"; kubectl get pods -n calico-system -l k8s-app=calico-typha'
 alias kl='kubectl logs -f'
 alias kex='kubectl exec -it'
 alias kaf='kubectl apply -f'
+alias kgts='kubectl get tigerastatus'
+
+alias gs='git status'
+alias gb='git branch'
+alias gc='git commit -a'
+alias gpo='git push origin'
+alias gpc='git push cd4'
+alias gwl='git worktree list'
+alias gwr='git worktree remove'
+alias gwp='git worktree prune'
+gw() {
+  local dir
+  dir=$(git worktree list | fzf --no-multi | awk '{print $1}') && cd "$dir"
+}
 
 # Use kubecolor for colorized kubectl output if available.
 command -v kubecolor &>/dev/null && alias kubectl='kubecolor' && alias k='kubecolor'

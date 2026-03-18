@@ -34,6 +34,7 @@ Run `date` to check the current date and time.
 - Short receiver names: single letter matching the type.
 - `fmt.Errorf` with `%w` (not `%v`) for error wrapping.
 - `logrus.WithError(err)` for error logging, not inlined in format strings.
+- Import logrus as `"github.com/sirupsen/logrus"` and use `logrus.` directly — don't alias it as `log`.
 - Comments explain "why", not "what". No comments on self-documenting code.
 - Doc comments start with the exported name: `// Foo does...`
 - Always use safe type assertions (`obj, ok := x.(*T)`) — never bare assertions that can panic.

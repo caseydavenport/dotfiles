@@ -576,11 +576,18 @@ const PRIORITY_COLORS = {{
   "parked": "#484f58",
 }};
 const STATE_COLORS = {{
-  "ready-for-review": "#2da44e",
-  "reviewed-pending-updates": "#bf8700",
-  "ready-to-merge": "#1f6feb",
+  "needs-review": "#2da44e",
+  "reviewed": "#bf8700",
+  "mergeable": "#1f6feb",
   "draft": "#768390",
   "needs-work": "#cf222e",
+}};
+const STATE_SORT_ORDER = {{
+  "mergeable": 0,
+  "reviewed": 1,
+  "needs-review": 2,
+  "needs-work": 3,
+  "draft": 4,
 }};
 const CI_COLORS = {{
   "pass": "#2da44e",
@@ -729,7 +736,7 @@ function renderCard(pr) {{
   const currentState = pendingChanges[key]?.state || pr.state;
   const stateColor = STATE_COLORS[currentState] || "#768390";
 
-  const states = ["ready-for-review", "reviewed-pending-updates", "ready-to-merge", "draft", "needs-work"];
+  const states = ["mergeable", "reviewed", "needs-review", "needs-work", "draft"];
   const stateOpts = states.map(s =>
     `<option value="${{s}}" ${{s === currentState ? "selected" : ""}}>${{s}}</option>`
   ).join("");
@@ -785,6 +792,11 @@ function renderMyPrs() {{
   board.innerHTML = PRIORITY_ORDER.map(p => {{
     const color = PRIORITY_COLORS[p];
     const label = PRIORITY_LABELS[p];
+    grouped[p].sort((a, b) => {{
+      const sa = STATE_SORT_ORDER[pendingChanges[prKey(a)]?.state || a.state] ?? 99;
+      const sb = STATE_SORT_ORDER[pendingChanges[prKey(b)]?.state || b.state] ?? 99;
+      return sa - sb;
+    }});
     const cards = grouped[p].map(renderCard).join("");
     return `<div class="column" data-priority="${{p}}"
       ondragover="handleDragOver(event)"

@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PR Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2358a6ff'><circle cx='4' cy='4' r='2'/><circle cx='4' cy='12' r='2'/><circle cx='12' cy='12' r='2'/><path d='M4 6v4M12 10V7a3 3 0 0 0-3-3H7' stroke='%2358a6ff' stroke-width='1.5' fill='none'/></svg>">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-hover: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --link: #58a6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    line-height: 1.4;
+  }
+  a { color: var(--link); text-decoration: none; font-weight: 600; }
+  a:hover { text-decoration: underline; }
+
+  .header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .header h1 { font-size: 22px; }
+  .header .subtitle { color: var(--text-muted); font-size: 13px; }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    background: transparent;
+    transition: color 0.15s, background 0.15s;
+    user-select: none;
+    position: relative;
+    bottom: -1px;
+  }
+  .tab:hover { color: var(--text); background: var(--surface); }
+  .tab.active {
+    color: var(--text);
+    background: var(--bg);
+    border-color: var(--border);
+    border-bottom-color: var(--bg);
+  }
+  .tab .tab-count {
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--text-muted);
+    background: var(--surface);
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .filter-group {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+  .filter-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-right: 4px;
+    user-select: none;
+  }
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .filter-btn:hover { border-color: var(--text-muted); color: var(--text); }
+  .filter-btn.active { background: var(--surface); border-color: var(--text-muted); color: var(--text); }
+  .filter-sep {
+    width: 1px;
+    height: 18px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+    min-height: 200px;
+  }
+  .board.board-3col {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .column {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    transition: border-color 0.15s;
+  }
+  .column.drag-over {
+    border-color: var(--link);
+    background: #161b2280;
+  }
+  .column-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+  }
+  .column-header .count {
+    font-weight: normal;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .column-cards {
+    flex: 1;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    min-height: 60px;
+  }
+
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 10px 8px;
+    cursor: grab;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card:hover { border-color: var(--text-muted); }
+  .card.dragging { opacity: 0.4; cursor: grabbing; }
+  .card.changed {
+    border-color: var(--link);
+    box-shadow: 0 0 0 1px var(--link);
+  }
+  .card.no-drag { cursor: default; }
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-top a { font-size: 12px; font-weight: 700; }
+  .card-repo { color: var(--text-muted); font-size: 11px; }
+  .card-title {
+    font-size: 13px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+  }
+  .card-badges {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .card-state {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    color: var(--text-muted);
+  }
+  .card-state:hover { border-color: var(--text-muted); background: var(--surface); }
+  .card-state:focus { outline: none; border-color: var(--link); }
+  .card-state option { background: var(--surface); color: var(--text); }
+  .card-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .card-meta .cherry { color: #a371f7; }
+  .card-meta .review { color: #bf8700; }
+  .card-meta .review.approved { color: #2da44e; }
+  .marvin-tag {
+    background: #a371f7;
+    color: #fff;
+    font-size: 10px;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .author-tag { color: var(--text-muted); font-size: 11px; font-style: italic; }
+  .draft-tag {
+    background: #768390;
+    color: #fff;
+    font-size: 10px;
+    padding: 0 4px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .marvin-section { margin-top: 8px; }
+  .marvin-section h2 {
+    font-size: 16px;
+    color: #a371f7;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .marvin-section h2 .count { font-size: 12px; color: var(--text-muted); font-weight: normal; }
+  .marvin-cards { display: flex; gap: 8px; flex-wrap: wrap; }
+  .marvin-cards .card { width: 280px; cursor: default; }
+
+  .list-view { display: flex; flex-direction: column; gap: 6px; max-width: 900px; }
+  .list-view .card { cursor: default; }
+  .list-group { margin-bottom: 20px; }
+  .list-group h3 {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .label-tag {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #fff;
+    background: var(--border);
+    white-space: nowrap;
+  }
+  .label-tag.bug { background: #cf222e; }
+  .label-tag.feature { background: #1f6feb; }
+  .label-tag.priority { background: #bf8700; }
+  .empty-state {
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 40px 20px;
+    text-align: center;
+    background: var(--surface);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  #apply-bar {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--link);
+    border-radius: 8px;
+    padding: 10px 20px;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    z-index: 100;
+  }
+  #apply-bar .change-count { font-size: 13px; }
+  #apply-bar button {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .apply-btn { background: #238636; color: #fff; }
+  .apply-btn:hover { background: #2ea043; }
+  .apply-btn:disabled { opacity: 0.6; cursor: wait; }
+  .discard-btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border) !important;
+  }
+  .discard-btn:hover { background: var(--bg); color: var(--text); }
+
+  .refresh-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .refresh-btn:hover { color: var(--text); border-color: var(--text-muted); }
+  .refresh-btn:disabled { opacity: 0.6; cursor: wait; }
+  .refresh-btn.spinning svg { animation: spin 0.8s linear infinite; }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(13,17,23,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    font-size: 16px;
+    color: var(--text-muted);
+  }
+  .loading-overlay.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">Loading PR data...</div>
+
+<div class="header">
+  <h1>PR Dashboard</h1>
+  <span class="subtitle" id="last-refreshed"></span>
+  <button class="refresh-btn" id="refresh-btn" onclick="refreshFromGitHub()" title="Refresh from GitHub">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/>
+      <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+    </svg>
+    Refresh
+  </button>
+</div>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-tab="my-prs" onclick="switchTab('my-prs')">
+    My PRs <span class="tab-count" id="my-prs-count"></span>
+  </div>
+  <div class="tab" data-tab="marvin-picks" onclick="switchTab('marvin-picks')">
+    Marvin Cherry-picks <span class="tab-count" id="marvin-picks-count"></span>
+  </div>
+  <div class="tab" data-tab="review-requests" onclick="switchTab('review-requests')">
+    Review Requests <span class="tab-count" id="review-requests-count"></span>
+  </div>
+  <div class="tab" data-tab="assigned-issues" onclick="switchTab('assigned-issues')">
+    Assigned Issues <span class="tab-count" id="assigned-issues-count"></span>
+  </div>
+</div>
+
+<div class="tab-panel active" id="panel-my-prs">
+  <div class="filters" id="filters"></div>
+  <div class="board" id="board"></div>
+</div>
+
+<div class="tab-panel" id="panel-marvin-picks">
+  <div class="marvin-cards" id="marvin-cards"></div>
+</div>
+
+<div class="tab-panel" id="panel-review-requests">
+  <div class="board board-3col" id="review-requests-board"></div>
+</div>
+
+<div class="tab-panel" id="panel-assigned-issues">
+  <div class="board board-3col" id="assigned-issues-board"></div>
+</div>
+
+<div id="apply-bar">
+  <span id="change-count" class="change-count"></span>
+  <button class="apply-btn" id="apply-btn" onclick="applyChanges()">Apply Changes</button>
+  <button class="discard-btn" onclick="discardChanges()">Discard</button>
+</div>
+
+<script>
+const REPO_URLS = {
+  "projectcalico/calico": "https://github.com/projectcalico/calico/pull",
+  "tigera/operator": "https://github.com/tigera/operator/pull",
+  "tigera/calico-private": "https://github.com/tigera/calico-private/pull",
+};
+const SHORT_REPO = {
+  "projectcalico/calico": "calico",
+  "tigera/operator": "operator",
+  "tigera/calico-private": "calico-private",
+};
+const PRIORITY_ORDER = ["active", "next-up", "backburner", "parked"];
+const PRIORITY_LABELS = {
+  "active": "Active",
+  "next-up": "Next Up",
+  "backburner": "Backburner",
+  "parked": "Parked",
+};
+const PRIORITY_COLORS = {
+  "active": "#cf222e",
+  "next-up": "#bf8700",
+  "backburner": "#768390",
+  "parked": "#484f58",
+};
+const STATE_COLORS = {
+  "needs-review": "#2da44e",
+  "reviewed": "#bf8700",
+  "mergeable": "#1f6feb",
+  "draft": "#768390",
+  "needs-work": "#cf222e",
+};
+const STATE_SORT_ORDER = {
+  "mergeable": 0,
+  "reviewed": 1,
+  "needs-review": 2,
+  "needs-work": 3,
+  "draft": 4,
+};
+const CI_COLORS = {
+  "pass": "#2da44e",
+  "fail": "#cf222e",
+  "pending": "#bf8700",
+  "unknown": "#768390",
+};
+
+const ITEM_PRIORITY_ORDER = ["active", "next-up", "low-priority"];
+const ITEM_PRIORITY_LABELS = {
+  "active": "Active",
+  "next-up": "Next Up",
+  "low-priority": "Low Priority",
+};
+const ITEM_PRIORITY_COLORS = {
+  "active": "#cf222e",
+  "next-up": "#bf8700",
+  "low-priority": "#768390",
+};
+
+let ALL_PRS = [];
+let REVIEW_REQUESTS = [];
+let ASSIGNED_ISSUES = [];
+let currentPriority = {};
+const pendingChanges = {};
+const pendingItemChanges = {};
+
+const activeFilters = { state: null, ci: null };
+
+function prKey(pr) {
+  return `${pr.short_repo}#${pr.number}`;
+}
+
+function shortRepo(name) {
+  return SHORT_REPO[name] || name.split("/").pop();
+}
+
+// flattenPRs transforms TrackerData into a flat list matching the render functions' expectations.
+function flattenPRs(data) {
+  const prs = [];
+  for (const repo of (data.repos || [])) {
+    for (const pr of (repo.prs || [])) {
+      const reviews = pr.reviews || [];
+      const hasApproved = reviews.some(r => r.includes("APPROVED"));
+      const hasChanges = reviews.some(r => r.includes("CHANGES_REQUESTED"));
+      let reviewState = "none";
+      if (hasApproved) reviewState = "approved";
+      else if (hasChanges) reviewState = "changes-requested";
+
+      prs.push({
+        number: pr.number,
+        title: pr.title || "",
+        repo: repo.name,
+        short_repo: shortRepo(repo.name),
+        url: `${REPO_URLS[repo.name] || ""}/${pr.number}`,
+        state: pr.state || "",
+        priority: pr.priority || "backburner",
+        ci: pr.ci || "unknown",
+        reviews: reviews,
+        review_state: reviewState,
+        notes: pr.notes || "",
+        cherry_pick_of: pr.cherry_pick_of || "",
+        depends_on: pr.depends_on || [],
+        blocks: pr.blocks || [],
+        is_marvin: false,
+      });
+    }
+    for (const pick of (repo.marvin_cherry_picks || [])) {
+      prs.push({
+        number: pick.number,
+        title: pick.title || "",
+        repo: repo.name,
+        short_repo: shortRepo(repo.name),
+        url: `${REPO_URLS[repo.name] || ""}/${pick.number}`,
+        state: pick.state || "",
+        priority: pick.priority || "active",
+        ci: pick.ci || "unknown",
+        reviews: pick.reviews || [],
+        review_state: "none",
+        notes: pick.notes || "",
+        cherry_pick_of: "",
+        depends_on: [],
+        blocks: [],
+        is_marvin: true,
+        origin: pick.oss_pr || "",
+      });
+    }
+  }
+  return prs;
+}
+
+let lastRefreshedISO = "";
+
+function timeAgo(iso) {
+  if (!iso) return "unknown";
+  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (diff < 60) return "just now";
+  if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+  if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+  return Math.floor(diff / 86400) + "d ago";
+}
+
+// Keep the "Updated Xm ago" label fresh.
+setInterval(() => {
+  if (lastRefreshedISO) {
+    document.getElementById("last-refreshed").textContent =
+      "Updated " + timeAgo(lastRefreshedISO);
+  }
+}, 30000);
+
+async function loadData() {
+  const resp = await fetch("/api/prs");
+  if (!resp.ok) {
+    console.error("Failed to load PR data:", resp.status);
+    return;
+  }
+  const data = await resp.json();
+
+  ALL_PRS = flattenPRs(data);
+  REVIEW_REQUESTS = (data.review_requests || []).map(rr => ({
+    ...rr,
+    short_repo: shortRepo(rr.repo),
+    url: rr.url || `${REPO_URLS[rr.repo] || ""}/${rr.number}`,
+  }));
+  ASSIGNED_ISSUES = (data.assigned_issues || []).map(issue => ({
+    ...issue,
+    short_repo: shortRepo(issue.repo),
+  }));
+
+  currentPriority = {};
+  ALL_PRS.forEach(pr => { currentPriority[prKey(pr)] = pr.priority; });
+
+  lastRefreshedISO = data.last_refreshed || "";
+  document.getElementById("last-refreshed").textContent =
+    "Updated " + timeAgo(lastRefreshedISO);
+
+  renderMyPrs();
+  renderMarvinPicks();
+  renderReviewRequests();
+  renderAssignedIssues();
+  document.getElementById("loading-overlay").classList.add("hidden");
+}
+
+function markChanged(pr, field, value) {
+  const key = prKey(pr);
+  if (!pendingChanges[key]) pendingChanges[key] = {repo: pr.repo, number: pr.number};
+  if (value === pr[field]) {
+    delete pendingChanges[key][field];
+    if (Object.keys(pendingChanges[key]).length <= 2) delete pendingChanges[key];
+  } else {
+    pendingChanges[key][field] = value;
+  }
+  updateApplyBar();
+}
+
+function updateApplyBar() {
+  const bar = document.getElementById("apply-bar");
+  const count = Object.keys(pendingChanges).length + Object.keys(pendingItemChanges).length;
+  if (count > 0) {
+    bar.style.display = "flex";
+    document.getElementById("change-count").textContent =
+      count === 1 ? "1 PR changed" : `${count} PRs changed`;
+  } else {
+    bar.style.display = "none";
+  }
+}
+
+async function applyChanges() {
+  const btn = document.getElementById("apply-btn");
+  btn.disabled = true;
+  btn.textContent = "Applying...";
+
+  const changes = Object.values(pendingChanges).map(c => {
+    const entry = {repo: c.repo, number: c.number};
+    if (c.state) entry.state = c.state;
+    if (c.priority) entry.priority = c.priority;
+    if (c.notes !== undefined) entry.notes = c.notes;
+    return entry;
+  });
+
+  try {
+    const resp = await fetch("/api/prs", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({changes, item_changes: Object.values(pendingItemChanges)}),
+    });
+    if (resp.ok) {
+      Object.keys(pendingChanges).forEach(k => delete pendingChanges[k]);
+      Object.keys(pendingItemChanges).forEach(k => delete pendingItemChanges[k]);
+      updateApplyBar();
+      await loadData();
+    } else {
+      const err = await resp.json();
+      alert("Failed to apply: " + (err.error || resp.status));
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Apply Changes";
+  }
+}
+
+function discardChanges() {
+  Object.keys(pendingChanges).forEach(k => delete pendingChanges[k]);
+  Object.keys(pendingItemChanges).forEach(k => delete pendingItemChanges[k]);
+  ALL_PRS.forEach(pr => { currentPriority[prKey(pr)] = pr.priority; });
+  updateApplyBar();
+  renderMyPrs();
+  renderMarvinPicks();
+}
+
+async function refreshFromGitHub() {
+  const btn = document.getElementById("refresh-btn");
+  btn.classList.add("spinning");
+  btn.disabled = true;
+  try {
+    const resp = await fetch("/api/refresh", {method: "POST"});
+    if (resp.ok) {
+      // Clear pending changes since we just got fresh data.
+      Object.keys(pendingChanges).forEach(k => delete pendingChanges[k]);
+      updateApplyBar();
+      await loadData();
+    } else {
+      const err = await resp.json();
+      alert("Refresh failed: " + (err.error || resp.status));
+    }
+  } finally {
+    btn.classList.remove("spinning");
+    btn.disabled = false;
+  }
+}
+
+// --- Tab switching ---
+function switchTab(tabId) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add("active");
+  document.getElementById(`panel-${tabId}`).classList.add("active");
+}
+
+// --- Drag and drop ---
+let draggedPrKey = null;
+
+function handleDragStart(e) {
+  const card = e.target.closest(".card");
+  if (!card) return;
+  draggedPrKey = card.dataset.prkey;
+  card.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/plain", draggedPrKey);
+}
+
+function handleDragEnd(e) {
+  const card = e.target.closest(".card");
+  if (card) card.classList.remove("dragging");
+  document.querySelectorAll(".column.drag-over").forEach(c => c.classList.remove("drag-over"));
+  draggedPrKey = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  const col = e.target.closest(".column");
+  if (col) col.classList.add("drag-over");
+}
+
+function handleDragLeave(e) {
+  const col = e.target.closest(".column");
+  if (col && !col.contains(e.relatedTarget)) {
+    col.classList.remove("drag-over");
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  const col = e.target.closest(".column");
+  if (!col) return;
+  col.classList.remove("drag-over");
+  const newPriority = col.dataset.priority;
+  const key = e.dataTransfer.getData("text/plain");
+  if (!key || !newPriority) return;
+  const pr = ALL_PRS.find(p => prKey(p) === key);
+  if (!pr) return;
+  currentPriority[key] = newPriority;
+  markChanged(pr, "priority", newPriority);
+  renderMyPrs();
+}
+
+// --- State change handler ---
+function handleStateChange(el) {
+  const key = el.dataset.prkey;
+  const pr = ALL_PRS.find(p => prKey(p) === key);
+  if (!pr) return;
+  el.style.color = STATE_COLORS[el.value] || "#768390";
+  markChanged(pr, "state", el.value);
+  const card = el.closest(".card");
+  if (card) {
+    card.classList.toggle("changed", !!pendingChanges[prKey(pr)]);
+  }
+}
+
+// --- Rendering: My PRs ---
+function renderCard(pr) {
+  const key = prKey(pr);
+  const isChanged = !!pendingChanges[key];
+  const ciBg = CI_COLORS[pr.ci] || "#768390";
+  const currentState = pendingChanges[key]?.state || pr.state;
+  const stateColor = STATE_COLORS[currentState] || "#768390";
+
+  const states = ["mergeable", "reviewed", "needs-review", "needs-work", "draft"];
+  const stateOpts = states.map(s =>
+    `<option value="${s}" ${s === currentState ? "selected" : ""}>${s}</option>`
+  ).join("");
+
+  let meta = [];
+  if (pr.reviews.length) {
+    const isApproved = pr.reviews.some(r => r.includes("APPROVED"));
+    meta.push(`<span class="review ${isApproved ? "approved" : ""}">${pr.reviews.join(", ")}</span>`);
+  }
+  if (pr.cherry_pick_of) meta.push(`<span class="cherry">cherry-pick of ${pr.cherry_pick_of}</span>`);
+  if (pr.depends_on?.length) meta.push(`depends on: ${pr.depends_on.join(", ")}`);
+  if (pr.blocks?.length) meta.push(`blocks: ${pr.blocks.join(", ")}`);
+  if (pr.notes) meta.push(pr.notes);
+
+  const marvinTag = pr.is_marvin ? `<span class="marvin-tag">MARVIN</span>` : "";
+  const originTag = pr.origin ? `<span class="cherry">from ${pr.origin}</span>` : "";
+
+  return `<div class="card ${isChanged ? "changed" : ""}" draggable="true"
+    data-prkey="${key}"
+    style="border-left-color:${stateColor}"
+    ondragstart="handleDragStart(event)"
+    ondragend="handleDragEnd(event)">
+    <div class="card-top">
+      <a href="${pr.url}" target="_blank">#${pr.number}</a>
+      <span class="card-repo">${pr.short_repo}</span>
+      ${marvinTag}
+    </div>
+    <div class="card-title">${pr.title}</div>
+    ${meta.length || originTag ? `<div class="card-meta">${originTag}${meta.length ? (originTag ? "<br>" : "") + meta.join(" &middot; ") : ""}</div>` : ""}
+    <div class="card-footer">
+      <select class="card-state" style="color:${stateColor}"
+        data-prkey="${key}" onchange="handleStateChange(this)">
+        ${stateOpts}
+      </select>
+      <span class="badge" style="background:${ciBg}">CI:${pr.ci}</span>
+    </div>
+  </div>`;
+}
+
+function toggleFilter(type, value) {
+  activeFilters[type] = activeFilters[type] === value ? null : value;
+  renderFilters();
+  renderMyPrs();
+}
+
+function renderFilters() {
+  const regular = ALL_PRS.filter(pr => !pr.is_marvin);
+
+  // Count states and CI statuses across all regular PRs.
+  const stateCounts = {};
+  const ciCounts = {};
+  regular.forEach(pr => {
+    const s = pendingChanges[prKey(pr)]?.state || pr.state;
+    stateCounts[s] = (stateCounts[s] || 0) + 1;
+    ciCounts[pr.ci] = (ciCounts[pr.ci] || 0) + 1;
+  });
+
+  const stateOrder = ["mergeable", "reviewed", "needs-review", "needs-work", "draft"];
+  const ciOrder = ["pass", "fail", "pending", "unknown"];
+
+  const stateButtons = stateOrder
+    .filter(s => stateCounts[s])
+    .map(s => {
+      const color = STATE_COLORS[s] || "#768390";
+      const active = activeFilters.state === s ? "active" : "";
+      return `<button class="filter-btn ${active}" style="border-color:${active ? color : ''};color:${active ? color : ''}" onclick="toggleFilter('state','${s}')">${s} <span style="opacity:0.6">${stateCounts[s]}</span></button>`;
+    }).join("");
+
+  const ciButtons = ciOrder
+    .filter(c => ciCounts[c])
+    .map(c => {
+      const color = CI_COLORS[c] || "#768390";
+      const active = activeFilters.ci === c ? "active" : "";
+      return `<button class="filter-btn ${active}" style="border-color:${active ? color : ''};color:${active ? color : ''}" onclick="toggleFilter('ci','${c}')">${c} <span style="opacity:0.6">${ciCounts[c]}</span></button>`;
+    }).join("");
+
+  document.getElementById("filters").innerHTML =
+    `<div class="filter-group"><span class="filter-label">State</span>${stateButtons}</div>` +
+    `<div class="filter-sep"></div>` +
+    `<div class="filter-group"><span class="filter-label">CI</span>${ciButtons}</div>`;
+}
+
+function renderMyPrs() {
+  const board = document.getElementById("board");
+  let regular = ALL_PRS.filter(pr => !pr.is_marvin);
+
+  // Apply active filters.
+  if (activeFilters.state) {
+    regular = regular.filter(pr => (pendingChanges[prKey(pr)]?.state || pr.state) === activeFilters.state);
+  }
+  if (activeFilters.ci) {
+    regular = regular.filter(pr => pr.ci === activeFilters.ci);
+  }
+
+  renderFilters();
+
+  const grouped = {};
+  PRIORITY_ORDER.forEach(p => grouped[p] = []);
+  regular.forEach(pr => {
+    const p = currentPriority[prKey(pr)] || pr.priority;
+    if (grouped[p]) grouped[p].push(pr);
+    else grouped["backburner"].push(pr);
+  });
+
+  board.innerHTML = PRIORITY_ORDER.map(p => {
+    const color = PRIORITY_COLORS[p];
+    const label = PRIORITY_LABELS[p];
+    grouped[p].sort((a, b) => {
+      const sa = STATE_SORT_ORDER[pendingChanges[prKey(a)]?.state || a.state] ?? 99;
+      const sb = STATE_SORT_ORDER[pendingChanges[prKey(b)]?.state || b.state] ?? 99;
+      return sa - sb;
+    });
+    const cards = grouped[p].map(renderCard).join("");
+    return `<div class="column" data-priority="${p}"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)">
+      <div class="column-header" style="color:${color}">
+        ${label} <span class="count">${grouped[p].length}</span>
+      </div>
+      <div class="column-cards">${cards}</div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("my-prs-count").textContent = regular.length;
+}
+
+function renderMarvinPicks() {
+  const marvin = ALL_PRS.filter(pr => pr.is_marvin);
+  const container = document.getElementById("marvin-cards");
+  document.getElementById("marvin-picks-count").textContent = marvin.length;
+
+  if (!marvin.length) {
+    container.innerHTML = `<div class="empty-state">No pending marvin cherry-picks</div>`;
+    return;
+  }
+  container.innerHTML = marvin.map(renderCard).join("");
+}
+
+// --- Item priority helpers (review requests + assigned issues) ---
+function itemKey(type, item) {
+  return `${type}:${item.short_repo}#${item.number}`;
+}
+
+function getItemPriority(type, item) {
+  const key = itemKey(type, item);
+  if (pendingItemChanges[key]) return pendingItemChanges[key].priority;
+  return item.priority || "next-up";
+}
+
+function setItemPriority(type, item, newPriority) {
+  const key = itemKey(type, item);
+  const orig = item.priority || "next-up";
+  if (newPriority === orig) {
+    delete pendingItemChanges[key];
+  } else {
+    pendingItemChanges[key] = {type, repo: item.repo, number: item.number, priority: newPriority};
+  }
+  updateApplyBar();
+}
+
+function renderItemBoard(boardId, items, type, renderCardFn) {
+  const board = document.getElementById(boardId);
+  const grouped = {};
+  ITEM_PRIORITY_ORDER.forEach(p => grouped[p] = []);
+  items.forEach(item => {
+    const p = getItemPriority(type, item);
+    if (grouped[p]) grouped[p].push(item);
+    else grouped["next-up"].push(item);
+  });
+
+  board.innerHTML = ITEM_PRIORITY_ORDER.map(p => {
+    const color = ITEM_PRIORITY_COLORS[p];
+    const label = ITEM_PRIORITY_LABELS[p];
+    const cards = grouped[p].map(renderCardFn).join("");
+    return `<div class="column" data-priority="${p}" data-item-type="${type}"
+      ondragover="handleItemDragOver(event)"
+      ondragleave="handleItemDragLeave(event)"
+      ondrop="handleItemDrop(event)">
+      <div class="column-header" style="color:${color}">
+        ${label} <span class="count">${grouped[p].length}</span>
+      </div>
+      <div class="column-cards">${cards}</div>
+    </div>`;
+  }).join("");
+}
+
+// Item drag-and-drop
+function handleItemDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "move";
+  const col = e.target.closest(".column");
+  if (col) col.classList.add("drag-over");
+}
+function handleItemDragLeave(e) {
+  const col = e.target.closest(".column");
+  if (col && !col.contains(e.relatedTarget)) col.classList.remove("drag-over");
+}
+function handleItemDrop(e) {
+  e.preventDefault();
+  const col = e.target.closest(".column");
+  if (!col) return;
+  col.classList.remove("drag-over");
+  const newPriority = col.dataset.priority;
+  const itemType = col.dataset.itemType;
+  const data = e.dataTransfer.getData("text/plain");
+  if (!data || !newPriority) return;
+  const items = itemType === "review_request" ? REVIEW_REQUESTS : ASSIGNED_ISSUES;
+  const item = items.find(i => itemKey(itemType, i) === data);
+  if (!item) return;
+  setItemPriority(itemType, item, newPriority);
+  if (itemType === "review_request") renderReviewRequests();
+  else renderAssignedIssues();
+}
+
+// --- Rendering: Review Requests ---
+function renderReviewRequests() {
+  document.getElementById("review-requests-count").textContent = REVIEW_REQUESTS.length;
+  if (!REVIEW_REQUESTS.length) {
+    document.getElementById("review-requests-board").innerHTML =
+      `<div class="empty-state" style="grid-column:1/-1">No pending review requests</div>`;
+    return;
+  }
+  renderItemBoard("review-requests-board", REVIEW_REQUESTS, "review_request", rr => {
+    const ciBg = CI_COLORS[rr.ci] || "#768390";
+    const draftTag = rr.draft ? `<span class="draft-tag">DRAFT</span>` : "";
+    const key = itemKey("review_request", rr);
+    const isChanged = !!pendingItemChanges[key];
+    return `<div class="card ${isChanged ? "changed" : ""}" draggable="true"
+      data-prkey="${key}"
+      ondragstart="handleDragStart(event)"
+      ondragend="handleDragEnd(event)">
+      <div class="card-top">
+        <a href="${rr.url}" target="_blank">#${rr.number}</a>
+        <span class="card-repo">${rr.short_repo}</span>
+        ${draftTag}
+      </div>
+      <div class="card-title">${rr.title}</div>
+      <div class="card-footer">
+        <span class="author-tag">by ${rr.author}</span>
+        <span class="badge" style="background:${ciBg}">CI:${rr.ci}</span>
+      </div>
+    </div>`;
+  });
+}
+
+// --- Rendering: Assigned Issues ---
+function labelClass(label) {
+  const l = label.toLowerCase();
+  if (l.includes("bug")) return "bug";
+  if (l.includes("feature") || l.includes("enhancement")) return "feature";
+  if (l.includes("priority")) return "priority";
+  return "";
+}
+
+function renderAssignedIssues() {
+  document.getElementById("assigned-issues-count").textContent = ASSIGNED_ISSUES.length;
+  if (!ASSIGNED_ISSUES.length) {
+    document.getElementById("assigned-issues-board").innerHTML =
+      `<div class="empty-state" style="grid-column:1/-1">No assigned issues</div>`;
+    return;
+  }
+  renderItemBoard("assigned-issues-board", ASSIGNED_ISSUES, "assigned_issue", issue => {
+    const labels = (issue.labels || []).map(l =>
+      `<span class="label-tag ${labelClass(l)}">${l}</span>`
+    ).join(" ");
+    const key = itemKey("assigned_issue", issue);
+    const isChanged = !!pendingItemChanges[key];
+    return `<div class="card ${isChanged ? "changed" : ""}" draggable="true"
+      data-prkey="${key}"
+      ondragstart="handleDragStart(event)"
+      ondragend="handleDragEnd(event)">
+      <div class="card-top">
+        <a href="${issue.url}" target="_blank">#${issue.number}</a>
+        <span class="card-repo">${issue.short_repo}</span>
+      </div>
+      <div class="card-title">${issue.title}</div>
+      ${labels ? `<div class="card-footer">${labels}</div>` : ""}
+    </div>`;
+  });
+}
+
+// Initial load
+loadData();
+
+// Auto-refresh every 30 minutes.
+setInterval(() => {
+  if (Object.keys(pendingChanges).length === 0 && Object.keys(pendingItemChanges).length === 0) {
+    refreshFromGitHub();
+  }
+}, 30 * 60 * 1000);
+</script>
+</body>
+</html>

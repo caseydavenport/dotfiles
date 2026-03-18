@@ -197,24 +197,10 @@ au FileType go nmap <Leader>ds <Plug>(go-def-split)
 au FileType go nmap <Leader>dv <Plug>(go-def-vertical)
 au FileType go nmap <Leader>dt <Plug>(go-def-tab)
 
-" Golang vim-go mappings for docs
-au FileType go nmap <Leader>g <Plug>(go-doc)
-au FileType go nmap <Leader>gv <Plug>(go-doc-vertical)
 
-" Show interfaces which are implemented by the type under cursor.
-au FileType go nmap <Leader>s <Plug>(go-implements)
 
-" Show potential implementations of the function under the cursor.
-au FileType go nmap <Leader>f <Plug>(go-callees)
 
-" Show potential callers of the function under the cursor.
-au FileType go nmap <Leader>c <Plug>(go-callers)
 
-" Show type info for the word under cursor.
-au FileType go nmap <Leader>i <Plug>(go-info)
-
-" Rename the identifier under the cursor.
-au FileType go nmap <Leader>e <Plug>(go-rename)
 
 " Switch CWD to the directory of the open buffer.
 map <leader>cd :cd %:p:h<cr>:pwd<cr>
@@ -245,6 +231,9 @@ let g:go_build_tags = 'fvtests'
 " Use strict goformatting
 " https://github.com/mvdan/gofumpt
 let g:go_gopls_gofumpt=1
+
+" Prevent auto-indent on colon (cindent treats : as a C label)
+set indentkeys-=:
 
 " Set fuzzy file search shortcut.
 let g:ctrlp_map = '<c-f>'
