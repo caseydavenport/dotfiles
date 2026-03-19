@@ -35,7 +35,7 @@ repos:
         blocks: []             # ["calico-private#890"]
         notes: "WIP infra improvement"
 
-# PRs from others where Casey is a requested reviewer
+# PRs from others where Casey is a requested reviewer or has left a review
 review_requests:
   - number: 456
     title: "Add support for foo"
@@ -77,9 +77,10 @@ Triggers: "refresh PRs", "refresh my PRs", "update PR data". This fetches fresh 
    gh pr list --repo tigera/calico-private --author marvin-tigera --state open --label merge-oss-cherry-pick --json number,title,body,baseRefName --limit 20
    ```
    Parse the body for `projectcalico/calico#NNNN` references to link back to Casey's PRs. **Only include picks whose `oss_pr` matches one of Casey's open calico PRs** — discard the rest.
-5. Fetch PRs where Casey is a requested reviewer or assignee (two queries, deduplicated):
+5. Fetch PRs where Casey is a requested reviewer, has already reviewed, or is assigned (three queries, deduplicated):
    ```bash
    gh search prs --state=open --json number,title,repository,url,author,isDraft --limit 50 -- 'user-review-requested:caseydavenport'
+   gh search prs --reviewed-by=caseydavenport --state=open --json number,title,repository,url,author,isDraft --limit 50 -- -author:caseydavenport
    gh search prs --state=open --assignee=caseydavenport --json number,title,repository,url,author,isDraft --limit 50
    ```
    Deduplicate by repo#number. For each PR, also fetch CI status:
