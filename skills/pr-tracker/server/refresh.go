@@ -315,14 +315,7 @@ func fetchMarvinPicks() ([]MarvinPick, error) {
 }
 
 func fetchReviewRequests() ([]ReviewRequest, error) {
-	out, err := ghJSON("search", "prs", "--state=open",
-		"--json", "number,title,repository,url,author,isDraft",
-		"--limit", "50", "--", "user-review-requested:caseydavenport")
-	if err != nil {
-		return nil, err
-	}
-
-	var raw []struct {
+	type rawPR struct {
 		Number int    `json:"number"`
 		Title  string `json:"title"`
 		URL    string `json:"url"`
@@ -334,23 +327,77 @@ func fetchReviewRequests() ([]ReviewRequest, error) {
 			NameWithOwner string `json:"nameWithOwner"`
 		} `json:"repository"`
 	}
-	if err := json.Unmarshal(out, &raw); err != nil {
-		return nil, fmt.Errorf("parsing review requests: %w", err)
+
+	// Fetch both direct review requests and assigned PRs in parallel.
+	var reviewRaw, assignedRaw []rawPR
+	var reviewErr, assignedErr error
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		out, err := ghJSON("search", "prs", "--state=open",
+			"--json", "number,title,repository,url,author,isDraft",
+			"--limit", "50", "--", "user-review-requested:caseydavenport")
+		if err != nil {
+			reviewErr = err
+			return
+		}
+		reviewErr = json.Unmarshal(out, &reviewRaw)
+	}()
+	go func() {
+		defer wg.Done()
+		out, err := ghJSON("search", "prs", "--state=open",
+			"--assignee=caseydavenport",
+			"--json", "number,title,repository,url,author,isDraft",
+			"--limit", "50")
+		if err != nil {
+			assignedErr = err
+			return
+		}
+		assignedErr = json.Unmarshal(out, &assignedRaw)
+	}()
+	wg.Wait()
+
+	if reviewErr != nil && assignedErr != nil {
+		return nil, fmt.Errorf("review requests: %w; assigned: %w", reviewErr, assignedErr)
 	}
 
-	rrs := make([]ReviewRequest, 0, len(raw))
-	for _, r := range raw {
-		ci := fetchCI(r.Repository.NameWithOwner, r.Number)
-		rrs = append(rrs, ReviewRequest{
-			Number: r.Number,
-			Title:  r.Title,
-			Repo:   r.Repository.NameWithOwner,
-			URL:    r.URL,
-			Author: r.Author.Login,
-			CI:     ci,
-			Draft:  r.IsDraft,
-		})
+	// Deduplicate by repo#number, preferring review-requested entries.
+	seen := map[string]bool{}
+	rrs := make([]ReviewRequest, 0, len(reviewRaw)+len(assignedRaw))
+
+	for _, batch := range [][]rawPR{reviewRaw, assignedRaw} {
+		for _, r := range batch {
+			// Skip Casey's own PRs — they're already in "My PRs".
+			if r.Author.Login == "caseydavenport" {
+				continue
+			}
+			key := fmt.Sprintf("%s#%d", r.Repository.NameWithOwner, r.Number)
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			ci := fetchCI(r.Repository.NameWithOwner, r.Number)
+			rrs = append(rrs, ReviewRequest{
+				Number: r.Number,
+				Title:  r.Title,
+				Repo:   r.Repository.NameWithOwner,
+				URL:    r.URL,
+				Author: r.Author.Login,
+				CI:     ci,
+				Draft:  r.IsDraft,
+			})
+		}
 	}
+
+	if reviewErr != nil {
+		log.Printf("warning: review requests fetch failed: %v", reviewErr)
+	}
+	if assignedErr != nil {
+		log.Printf("warning: assigned PRs fetch failed: %v", assignedErr)
+	}
+
 	return rrs, nil
 }
 

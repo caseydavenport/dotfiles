@@ -66,6 +66,10 @@ Modified files: update the end year to 2026 (e.g., `2023-2026`).
 - When planning changes to `projectcalico/calico`, consider the implications for merging to `tigera/calico-private` as part of the design (e.g., avoid unnecessary conflicts, keep changes modular).
 - When making changes in `tigera/calico-private`, consider the reverse — how will upstream merges from `projectcalico/calico` interact with these changes.
 
+## Testing
+
+- Always use Makefile targets (`make -C <component> ut`, `make -C <component> test`, `make -C <component> fv`) to run tests before attempting bare `go test` commands. Makefile targets set up required dependencies (envtest binaries, Docker containers, etcd, permissions, etc.) that `go test` alone will miss.
+
 ## Calico-Specific
 
 - CRD generation: `make -C api gen-files` regenerates CRDs, deep copies, client sets.

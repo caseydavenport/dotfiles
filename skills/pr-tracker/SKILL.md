@@ -77,11 +77,12 @@ Triggers: "refresh PRs", "refresh my PRs", "update PR data". This fetches fresh 
    gh pr list --repo tigera/calico-private --author marvin-tigera --state open --label merge-oss-cherry-pick --json number,title,body,baseRefName --limit 20
    ```
    Parse the body for `projectcalico/calico#NNNN` references to link back to Casey's PRs. **Only include picks whose `oss_pr` matches one of Casey's open calico PRs** — discard the rest.
-5. Fetch PRs where Casey is directly requested as a reviewer (excludes team-based assignments):
+5. Fetch PRs where Casey is a requested reviewer or assignee (two queries, deduplicated):
    ```bash
    gh search prs --state=open --json number,title,repository,url,author,isDraft --limit 50 -- 'user-review-requested:caseydavenport'
+   gh search prs --state=open --assignee=caseydavenport --json number,title,repository,url,author,isDraft --limit 50
    ```
-   For each review-requested PR, also fetch CI status:
+   Deduplicate by repo#number. For each PR, also fetch CI status:
    ```bash
    gh pr checks <number> --repo <repo> 2>&1 | grep -i "semaphore\|Argo"
    ```
