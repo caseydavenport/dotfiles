@@ -60,7 +60,7 @@ assigned_issues:
 - `tigera/operator` — Casey's fork remote is `cd4`
 - `tigera/calico-private` — push to `origin`
 
-Also track **marvin-tigera cherry-picks**: open PRs in `tigera/calico-private` authored by `marvin-tigera` with label `merge-oss-cherry-pick` that reference Casey's OSS PRs in the body (pattern: `projectcalico/calico#NNNN`). These carry the same metadata fields as regular PRs (state, priority, ci, reviews, notes).
+Also track **cherry-picks**: open PRs in `tigera/calico-private` with label `merge-oss-cherry-pick` that are either authored by Casey or reference one of Casey's open OSS PRs in the body (pattern: `projectcalico/calico#NNNN`). These carry the same metadata fields as regular PRs (state, priority, ci, reviews, notes).
 
 ## Mode 1: Refresh ("refresh PRs")
 
@@ -72,11 +72,11 @@ Triggers: "refresh PRs", "refresh my PRs", "update PR data". This fetches fresh 
    gh pr list --repo <repo> --author caseydavenport --state open --json number,title,isDraft,reviewDecision,labels,headRefName,baseRefName --limit 50
    ```
 3. For each PR, fetch CI and review status (same as auto-update)
-4. Also fetch marvin-tigera cherry-picks:
+4. Also fetch cherry-picks:
    ```bash
-   gh pr list --repo tigera/calico-private --author marvin-tigera --state open --label merge-oss-cherry-pick --json number,title,body,baseRefName --limit 20
+   gh pr list --repo tigera/calico-private --state open --label merge-oss-cherry-pick --json number,title,body,baseRefName,author --limit 50
    ```
-   Parse the body for `projectcalico/calico#NNNN` references to link back to Casey's PRs. **Only include picks whose `oss_pr` matches one of Casey's open calico PRs** — discard the rest.
+   Parse the body for `projectcalico/calico#NNNN` references to link back to Casey's PRs. Include picks that are either authored by Casey or whose `oss_pr` matches one of Casey's open calico PRs — discard the rest.
 5. Fetch PRs where Casey is a requested reviewer, has already reviewed, or is assigned (three queries, deduplicated):
    ```bash
    gh search prs --state=open --json number,title,repository,url,author,isDraft --limit 50 -- 'user-review-requested:caseydavenport'
@@ -105,18 +105,36 @@ Triggers: "show PRs", "show my PRs", "my PRs", "PR status", "check my PRs". This
 
 ## Mode 3: Browse ("browse PRs", "open PR dashboard")
 
-Triggers: "browse PRs", "browse my PRs", "open PR dashboard", "PR dashboard". This starts the Go dashboard server and opens the browser.
+Triggers: "browse PRs", "browse my PRs", "open PR dashboard", "PR dashboard". This starts the dashboard in a Docker container and opens the browser.
 
-1. Build and start the server (if not already running):
+1. Check if the container is already running:
    ```bash
-   cd ~/.claude/skills/pr-tracker/server && GOTOOLCHAIN=local go build -o pr-dashboard . && ./pr-dashboard
+   docker ps --filter name=pr-dashboard --format '{{.ID}}'
    ```
-2. The server reads the YAML data file, serves the dashboard at http://127.0.0.1:48923, and opens the browser automatically.
-3. The dashboard supports:
+   If running, just open the browser and confirm.
+
+2. Build the image (if needed) and start the container:
+   ```bash
+   docker build -t pr-dashboard ~/.claude/skills/pr-tracker/server
+   docker run -d --rm --name pr-dashboard \
+     -p 48923:48923 \
+     -e GITHUB_TOKEN="$GITHUB_TOKEN" \
+     -v ~/.claude/projects/-home-casey-repos-gopath-src-github-com-projectcalico-calico/memory:/data \
+     pr-dashboard
+   ```
+
+3. Open the browser from the host:
+   ```bash
+   xdg-open http://127.0.0.1:48923
+   ```
+
+4. The dashboard supports:
    - Drag-and-drop priority changes
    - State dropdown changes
    - "Apply Changes" button that writes edits back to the YAML file via `PATCH /api/prs`
    - "Refresh" button that fetches fresh data from GitHub via `POST /api/refresh`
+
+To stop the dashboard: `docker stop pr-dashboard`
 
 ## Deriving state from GitHub data
 
@@ -158,15 +176,19 @@ Print a concise text summary grouped by priority, one line per PR. Do **not** op
   operator#4400 [bug] Operator panic on upgrade
 ```
 
-### Browser dashboard (Mode 4: Browse)
+### Browser dashboard (Mode 3: Browse)
 
-Start the Go server. Do **not** print the terminal summary.
+Start the Docker container. Do **not** print the terminal summary.
 
 ```bash
-cd ~/.claude/skills/pr-tracker/server && GOTOOLCHAIN=local go build -o pr-dashboard . && ./pr-dashboard
+docker build -t pr-dashboard ~/.claude/skills/pr-tracker/server
+docker run -d --rm --name pr-dashboard \
+  -p 48923:48923 \
+  -e GITHUB_TOKEN="$GITHUB_TOKEN" \
+  -v ~/.claude/projects/-home-casey-repos-gopath-src-github-com-projectcalico-calico/memory:/data \
+  pr-dashboard
+xdg-open http://127.0.0.1:48923
 ```
-
-The server runs on port 48923 by default. Use `--port N` to change, `--no-browse` to skip auto-opening.
 
 API endpoints:
 - `GET /api/prs` — returns full tracker data as JSON

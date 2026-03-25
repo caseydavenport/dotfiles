@@ -56,7 +56,11 @@ func main() {
 	})
 	mux.HandleFunc("/", handleDashboard)
 
-	addr := fmt.Sprintf("127.0.0.1:%d", *port)
+	listenAddr := "127.0.0.1"
+	if os.Getenv("LISTEN_ALL") != "" {
+		listenAddr = "0.0.0.0"
+	}
+	addr := fmt.Sprintf("%s:%d", listenAddr, *port)
 	url := fmt.Sprintf("http://%s", addr)
 
 	if !*noBrowse {

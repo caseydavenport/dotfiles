@@ -168,7 +168,7 @@ export FZF_DEFAULT_OPTS=" \
   --height=40% --layout=reverse --border=rounded"
 
 # Ctrl+T: file finder with bat preview
-export FZF_CTRL_T_OPTS="--preview 'batcat --color=always --style=numbers --line-range=:200 {} 2>/dev/null || head -200 {}'"
+export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:200 {} 2>/dev/null || head -200 {}'"
 
 # Alt+C: cd into directory with eza tree preview
 export FZF_ALT_C_OPTS="--preview 'eza --tree --icons --level=2 --color=always {} 2>/dev/null || ls -la {}'"

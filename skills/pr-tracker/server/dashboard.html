@@ -14,6 +14,11 @@
     --text: #e6edf3;
     --text-muted: #8b949e;
     --link: #58a6ff;
+    --state-mergeable: #2da44e;
+    --state-needs-review: #bf8700;
+    --state-reviewed: #cf222e;
+    --state-needs-work: #cf222e;
+    --state-draft: #768390;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -133,6 +138,7 @@
     flex-direction: column;
     min-height: 200px;
     transition: border-color 0.15s;
+    overflow: hidden;
   }
   .column.drag-over {
     border-color: var(--link);
@@ -147,6 +153,7 @@
     justify-content: space-between;
     align-items: center;
     user-select: none;
+    border-top: 3px solid currentColor;
   }
   .column-header .count {
     font-weight: normal;
@@ -170,7 +177,7 @@
     border-radius: 6px;
     padding: 10px 10px 8px;
     cursor: grab;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
     font-size: 13px;
     display: flex;
     flex-direction: column;
@@ -183,6 +190,91 @@
     box-shadow: 0 0 0 1px var(--link);
   }
   .card.no-drag { cursor: default; }
+  .card.state-mergeable {
+    background: #2da44e30;
+    border-left-color: var(--state-mergeable);
+    box-shadow: 0 0 10px #2da44e35;
+  }
+  .card.state-mergeable:not(.changed):not(:hover) {
+    animation: mergeableGlow 3s ease-in-out infinite;
+  }
+  .card.state-needs-review {
+    background: #bf870028;
+    border-left-color: var(--state-needs-review);
+  }
+  .card.state-reviewed {
+    background: #cf222e28;
+    border-left-color: var(--state-reviewed);
+  }
+  .card.state-needs-work {
+    background: #cf222e28;
+    border-left-color: var(--state-needs-work);
+  }
+  .card.state-draft {
+    background: #76839022;
+    border-left-color: var(--state-draft);
+  }
+  @keyframes mergeableGlow {
+    0%, 100% { box-shadow: 0 0 10px #2da44e35; }
+    50% { box-shadow: 0 0 18px #2da44e55; }
+  }
+  .card.ready-to-merge {
+    position: relative;
+    overflow: hidden;
+  }
+  .card.ready-to-merge::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(45, 164, 78, 0.1) 45%,
+      rgba(63, 185, 80, 0.15) 50%,
+      rgba(45, 164, 78, 0.1) 55%,
+      transparent 70%
+    );
+    animation: shimmer 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .card.untriaged {
+    border-image: linear-gradient(135deg, #58a6ff, #a371f7, #58a6ff) 1;
+    border-left: 3px solid;
+    border-image: none;
+    border-color: #a371f7;
+    position: relative;
+    overflow: hidden;
+  }
+  .card.untriaged::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(163, 113, 247, 0.08) 45%,
+      rgba(88, 166, 255, 0.12) 50%,
+      rgba(163, 113, 247, 0.08) 55%,
+      transparent 70%
+    );
+    animation: shimmer 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .new-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: linear-gradient(135deg, #58a6ff, #a371f7);
+    color: #fff;
+  }
   .card-top {
     display: flex;
     align-items: center;
@@ -197,6 +289,15 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    transition: all 0.15s;
+  }
+  .card:hover .card-title {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
+  .card:hover .card-meta {
+    max-height: 200px;
+    overflow: visible;
   }
   .card-footer {
     display: flex;
@@ -222,19 +323,21 @@
     white-space: nowrap;
   }
   .card-state {
-    background: transparent;
-    border: 1px solid var(--border);
+    border: none;
     border-radius: 10px;
-    padding: 3px 8px;
-    font-size: 12px;
+    padding: 3px 10px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
-    color: var(--text-muted);
+    color: #fff;
+    background: var(--state-draft);
+    opacity: 0.9;
+    transition: opacity 0.15s;
   }
-  .card-state:hover { border-color: var(--text-muted); background: var(--surface); }
-  .card-state:focus { outline: none; border-color: var(--link); }
+  .card-state:hover { opacity: 1; }
+  .card-state:focus { outline: none; box-shadow: 0 0 0 2px var(--link); }
   .card-state option { background: var(--surface); color: var(--text); }
   .card-meta {
     font-size: 11px;
@@ -244,7 +347,45 @@
   .card-meta .cherry { color: #a371f7; }
   .card-meta .review { color: #bf8700; }
   .card-meta .review.approved { color: #2da44e; }
-  .marvin-tag {
+  .review-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+  .review-indicator.approved {
+    background: #2da44e20;
+    color: #3fb950;
+  }
+  .review-indicator.changes-requested {
+    background: #cf222e18;
+    color: #f85149;
+  }
+  .review-indicator svg { flex-shrink: 0; }
+  .ci-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .ci-badge svg { flex-shrink: 0; }
+  .card-avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .cherry-pick-tag {
     background: #a371f7;
     color: #fff;
     font-size: 10px;
@@ -262,18 +403,6 @@
     font-weight: 600;
   }
 
-  .marvin-section { margin-top: 8px; }
-  .marvin-section h2 {
-    font-size: 16px;
-    color: #a371f7;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .marvin-section h2 .count { font-size: 12px; color: var(--text-muted); font-weight: normal; }
-  .marvin-cards { display: flex; gap: 8px; flex-wrap: wrap; }
-  .marvin-cards .card { width: 280px; cursor: default; }
 
   .list-view { display: flex; flex-direction: column; gap: 6px; max-width: 900px; }
   .list-view .card { cursor: default; }
@@ -342,6 +471,57 @@
   }
   .discard-btn:hover { background: var(--bg); color: var(--text); }
 
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    flex: 0 1 240px;
+    transition: border-color 0.15s;
+  }
+  .search-bar:focus-within { border-color: var(--link); }
+  .search-bar input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    width: 100%;
+  }
+  .search-bar input::placeholder { color: var(--text-muted); }
+
+  .age-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 5px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  .age-fresh { background: #2da44e25; color: #3fb950; }
+  .age-recent { background: #bf870025; color: #d29922; }
+  .age-aging { background: #da3b0125; color: #f0883e; }
+  .age-stale { background: #cf222e25; color: #f85149; }
+
+  .ci-history {
+    display: inline-flex;
+    gap: 2px;
+    align-items: center;
+    margin-left: 4px;
+  }
+  .ci-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .ci-dot:first-child {
+    width: 8px;
+    height: 8px;
+  }
+
   .refresh-btn {
     background: transparent;
     border: 1px solid var(--border);
@@ -363,6 +543,44 @@
     to { transform: rotate(360deg); }
   }
 
+  .toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    pointer-events: auto;
+    animation: toastIn 0.3s ease-out;
+    max-width: 360px;
+  }
+  .toast.toast-out { animation: toastOut 0.3s ease-in forwards; }
+  .toast.toast-success { border-left: 3px solid #2da44e; }
+  .toast.toast-error { border-left: 3px solid #cf222e; }
+  .toast.toast-info { border-left: 3px solid var(--link); }
+  .toast svg { flex-shrink: 0; }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(40px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(40px); }
+  }
+
   .loading-overlay {
     position: fixed;
     inset: 0;
@@ -380,10 +598,17 @@
 <body>
 
 <div class="loading-overlay" id="loading-overlay">Loading PR data...</div>
+<div class="toast-container" id="toast-container"></div>
 
 <div class="header">
   <h1>PR Dashboard</h1>
   <span class="subtitle" id="last-refreshed"></span>
+  <div class="search-bar">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.5">
+      <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/>
+    </svg>
+    <input type="text" id="search-input" placeholder="Filter PRs..." oninput="handleSearch(this.value)">
+  </div>
   <button class="refresh-btn" id="refresh-btn" onclick="refreshFromGitHub()" title="Refresh from GitHub">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
       <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/>
@@ -396,9 +621,6 @@
 <div class="tabs" id="tabs">
   <div class="tab active" data-tab="my-prs" onclick="switchTab('my-prs')">
     My PRs <span class="tab-count" id="my-prs-count"></span>
-  </div>
-  <div class="tab" data-tab="marvin-picks" onclick="switchTab('marvin-picks')">
-    Marvin Cherry-picks <span class="tab-count" id="marvin-picks-count"></span>
   </div>
   <div class="tab" data-tab="review-requests" onclick="switchTab('review-requests')">
     Review Requests <span class="tab-count" id="review-requests-count"></span>
@@ -413,9 +635,6 @@
   <div class="board" id="board"></div>
 </div>
 
-<div class="tab-panel" id="panel-marvin-picks">
-  <div class="marvin-cards" id="marvin-cards"></div>
-</div>
 
 <div class="tab-panel" id="panel-review-requests">
   <div class="board board-3col" id="review-requests-board"></div>
@@ -456,9 +675,9 @@ const PRIORITY_COLORS = {
   "parked": "#484f58",
 };
 const STATE_COLORS = {
-  "needs-review": "#2da44e",
-  "reviewed": "#bf8700",
-  "mergeable": "#1f6feb",
+  "needs-review": "#bf8700",
+  "reviewed": "#cf222e",
+  "mergeable": "#2da44e",
   "draft": "#768390",
   "needs-work": "#cf222e",
 };
@@ -475,6 +694,112 @@ const CI_COLORS = {
   "pending": "#bf8700",
   "unknown": "#768390",
 };
+const CI_ICONS = {
+  "pass": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>`,
+  "fail": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/></svg>`,
+  "pending": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM2 8a6 6 0 1 1 12 0A6 6 0 0 1 2 8zm4.5-1.5a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3z"/></svg>`,
+  "unknown": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm9-3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-.25 3a.75.75 0 0 0-1.5 0v3a.75.75 0 0 0 1.5 0V8z"/></svg>`,
+};
+const REVIEW_ICONS = {
+  "approved": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>`,
+  "changes": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm11.28-2.28a.75.75 0 0 0-1.06-1.06L7.25 7.63 5.78 6.16a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l3.5-3.5z"/></svg>`,
+};
+
+// --- Toast notifications ---
+function showToast(message, type = "info", duration = 3000) {
+  const container = document.getElementById("toast-container");
+  const icons = {
+    success: `<svg width="14" height="14" viewBox="0 0 16 16" fill="#3fb950"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>`,
+    error: `<svg width="14" height="14" viewBox="0 0 16 16" fill="#f85149"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06z"/></svg>`,
+    info: `<svg width="14" height="14" viewBox="0 0 16 16" fill="#58a6ff"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm9-3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-.25 3a.75.75 0 0 0-1.5 0v3a.75.75 0 0 0 1.5 0V8z"/></svg>`,
+  };
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add("toast-out");
+    toast.addEventListener("animationend", () => toast.remove());
+  }, duration);
+}
+
+// --- Triage (dismiss NEW) ---
+async function triageCard(key) {
+  const pr = ALL_PRS.find(p => prKey(p) === key);
+  if (!pr) return;
+  pr.triaged = true;
+  // Immediately persist without going through the apply bar.
+  const t = true;
+  try {
+    await fetch("/api/prs", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({changes: [{repo: pr.repo, number: pr.number, triaged: t}]}),
+    });
+  } catch (e) {
+    showToast("Failed to triage: " + e.message, "error");
+    return;
+  }
+  renderMyPrs();
+
+}
+
+// --- Search ---
+let searchQuery = "";
+function handleSearch(value) {
+  searchQuery = value.toLowerCase().trim();
+  renderMyPrs();
+
+  renderReviewRequests();
+  renderAssignedIssues();
+}
+function matchesSearch(item) {
+  if (!searchQuery) return true;
+  const hay = `#${item.number} ${item.title} ${item.short_repo || ""} ${item.repo || ""} ${item.author || ""}`.toLowerCase();
+  return hay.includes(searchQuery);
+}
+
+// --- Age indicator ---
+function ageHtml(createdAt) {
+  if (!createdAt) return "";
+  const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86400000);
+  let label, cls;
+  if (days < 3) { label = days <= 0 ? "today" : days + "d"; cls = "age-fresh"; }
+  else if (days < 14) { label = days + "d"; cls = "age-recent"; }
+  else if (days < 30) { label = Math.floor(days / 7) + "w"; cls = "age-aging"; }
+  else { label = Math.floor(days / 30) + "mo"; cls = "age-stale"; }
+  return `<span class="age-badge ${cls}" title="Opened ${days} days ago">${label}</span>`;
+}
+
+// --- CI history sparkline ---
+function ciHistoryHtml(history) {
+  if (!history) return "";
+  const filtered = history.filter(s => s !== "pending");
+  if (filtered.length <= 1) return "";
+  return `<span class="ci-history" title="CI history (newest first): ${filtered.join(" → ")}">${
+    filtered.map(s => `<span class="ci-dot" style="background:${CI_COLORS[s] || "#768390"}"></span>`).join("")
+  }</span>`;
+}
+
+function ciHtml(ci) {
+  const bg = CI_COLORS[ci] || "#768390";
+  const icon = CI_ICONS[ci] || CI_ICONS["unknown"];
+  return `<span class="ci-badge" style="background:${bg}">${icon} ${ci}</span>`;
+}
+
+function reviewIndicatorHtml(reviews) {
+  if (!reviews || !reviews.length) return "";
+  const hasApproved = reviews.some(r => r.includes("APPROVED"));
+  const hasChanges = reviews.some(r => r.includes("CHANGES_REQUESTED"));
+  const reviewers = reviews.map(r => r.split(":")[0]);
+  if (hasApproved) {
+    return `<span class="review-indicator approved">${REVIEW_ICONS.approved} ${reviewers.join(", ")}</span>`;
+  }
+  if (hasChanges) {
+    return `<span class="review-indicator changes-requested">${REVIEW_ICONS.changes} ${reviewers.join(", ")}</span>`;
+  }
+  return "";
+}
 
 const ITEM_PRIORITY_ORDER = ["active", "next-up", "low-priority"];
 const ITEM_PRIORITY_LABELS = {
@@ -526,33 +851,16 @@ function flattenPRs(data) {
         state: pr.state || "",
         priority: pr.priority || "backburner",
         ci: pr.ci || "unknown",
+        ci_history: pr.ci_history || [],
+        created_at: pr.created_at || "",
         reviews: reviews,
         review_state: reviewState,
         notes: pr.notes || "",
         cherry_pick_of: pr.cherry_pick_of || "",
         depends_on: pr.depends_on || [],
         blocks: pr.blocks || [],
-        is_marvin: false,
-      });
-    }
-    for (const pick of (repo.marvin_cherry_picks || [])) {
-      prs.push({
-        number: pick.number,
-        title: pick.title || "",
-        repo: repo.name,
-        short_repo: shortRepo(repo.name),
-        url: `${REPO_URLS[repo.name] || ""}/${pick.number}`,
-        state: pick.state || "",
-        priority: pick.priority || "active",
-        ci: pick.ci || "unknown",
-        reviews: pick.reviews || [],
-        review_state: "none",
-        notes: pick.notes || "",
-        cherry_pick_of: "",
-        depends_on: [],
-        blocks: [],
-        is_marvin: true,
-        origin: pick.oss_pr || "",
+        author: pr.author || "",
+        triaged: pr.triaged || false,
       });
     }
   }
@@ -605,7 +913,7 @@ async function loadData() {
     "Updated " + timeAgo(lastRefreshedISO);
 
   renderMyPrs();
-  renderMarvinPicks();
+
   renderReviewRequests();
   renderAssignedIssues();
   document.getElementById("loading-overlay").classList.add("hidden");
@@ -655,13 +963,15 @@ async function applyChanges() {
       body: JSON.stringify({changes, item_changes: Object.values(pendingItemChanges)}),
     });
     if (resp.ok) {
+      const count = Object.keys(pendingChanges).length + Object.keys(pendingItemChanges).length;
       Object.keys(pendingChanges).forEach(k => delete pendingChanges[k]);
       Object.keys(pendingItemChanges).forEach(k => delete pendingItemChanges[k]);
       updateApplyBar();
       await loadData();
+      showToast(`Applied ${count} change${count !== 1 ? "s" : ""}`, "success");
     } else {
       const err = await resp.json();
-      alert("Failed to apply: " + (err.error || resp.status));
+      showToast("Failed to apply: " + (err.error || resp.status), "error", 5000);
     }
   } finally {
     btn.disabled = false;
@@ -675,7 +985,7 @@ function discardChanges() {
   ALL_PRS.forEach(pr => { currentPriority[prKey(pr)] = pr.priority; });
   updateApplyBar();
   renderMyPrs();
-  renderMarvinPicks();
+
 }
 
 async function refreshFromGitHub() {
@@ -689,9 +999,10 @@ async function refreshFromGitHub() {
       Object.keys(pendingChanges).forEach(k => delete pendingChanges[k]);
       updateApplyBar();
       await loadData();
+      showToast("Refreshed from GitHub", "success");
     } else {
       const err = await resp.json();
-      alert("Refresh failed: " + (err.error || resp.status));
+      showToast("Refresh failed: " + (err.error || resp.status), "error", 5000);
     }
   } finally {
     btn.classList.remove("spinning");
@@ -760,11 +1071,15 @@ function handleStateChange(el) {
   const key = el.dataset.prkey;
   const pr = ALL_PRS.find(p => prKey(p) === key);
   if (!pr) return;
-  el.style.color = STATE_COLORS[el.value] || "#768390";
+  el.style.background = STATE_COLORS[el.value] || "#768390";
   markChanged(pr, "state", el.value);
   const card = el.closest(".card");
   if (card) {
     card.classList.toggle("changed", !!pendingChanges[prKey(pr)]);
+    // Update state class on card
+    const states = ["mergeable", "reviewed", "needs-review", "needs-work", "draft"];
+    states.forEach(s => card.classList.remove(`state-${s}`));
+    card.classList.add(`state-${el.value}`);
   }
 }
 
@@ -772,7 +1087,6 @@ function handleStateChange(el) {
 function renderCard(pr) {
   const key = prKey(pr);
   const isChanged = !!pendingChanges[key];
-  const ciBg = CI_COLORS[pr.ci] || "#768390";
   const currentState = pendingChanges[key]?.state || pr.state;
   const stateColor = STATE_COLORS[currentState] || "#768390";
 
@@ -782,36 +1096,52 @@ function renderCard(pr) {
   ).join("");
 
   let meta = [];
-  if (pr.reviews.length) {
-    const isApproved = pr.reviews.some(r => r.includes("APPROVED"));
-    meta.push(`<span class="review ${isApproved ? "approved" : ""}">${pr.reviews.join(", ")}</span>`);
+  if (pr.cherry_pick_of) {
+    const m = pr.cherry_pick_of.match(/^(.+?)#(\d+)$/);
+    if (m) {
+      const cpUrl = `https://github.com/${m[1]}/pull/${m[2]}`;
+      meta.push(`<span class="cherry">cherry-pick of <a href="${cpUrl}" target="_blank">${pr.cherry_pick_of}</a></span>`);
+    } else {
+      meta.push(`<span class="cherry">cherry-pick of ${pr.cherry_pick_of}</span>`);
+    }
   }
-  if (pr.cherry_pick_of) meta.push(`<span class="cherry">cherry-pick of ${pr.cherry_pick_of}</span>`);
   if (pr.depends_on?.length) meta.push(`depends on: ${pr.depends_on.join(", ")}`);
   if (pr.blocks?.length) meta.push(`blocks: ${pr.blocks.join(", ")}`);
   if (pr.notes) meta.push(pr.notes);
 
-  const marvinTag = pr.is_marvin ? `<span class="marvin-tag">MARVIN</span>` : "";
-  const originTag = pr.origin ? `<span class="cherry">from ${pr.origin}</span>` : "";
+  const cherryPickTag = pr.cherry_pick_of ? `<span class="cherry-pick-tag">CHERRY-PICK</span>` : "";
+  const avatarHtml = pr.author && pr.author !== "caseydavenport"
+    ? `<img class="card-avatar" src="https://github.com/${pr.author}.png?size=36" alt="${pr.author}" title="${pr.author}">`
+    : "";
+  const reviewHtml = reviewIndicatorHtml(pr.reviews);
 
-  return `<div class="card ${isChanged ? "changed" : ""}" draggable="true"
+  const age = ageHtml(pr.created_at);
+  const ciHistory = ciHistoryHtml(pr.ci_history);
+  const isUntriaged = !pr.triaged && !isChanged;
+  const isReadyToMerge = currentState === "mergeable" && pr.ci === "pass";
+  const newTag = isUntriaged ? `<span class="new-tag" onclick="event.stopPropagation(); triageCard('${key}')" style="cursor:pointer" title="Click to dismiss">NEW</span>` : "";
+
+  return `<div class="card state-${currentState} ${isChanged ? "changed" : ""} ${isUntriaged ? "untriaged" : ""} ${isReadyToMerge ? "ready-to-merge" : ""}" draggable="true"
     data-prkey="${key}"
-    style="border-left-color:${stateColor}"
     ondragstart="handleDragStart(event)"
     ondragend="handleDragEnd(event)">
     <div class="card-top">
+      ${avatarHtml}
       <a href="${pr.url}" target="_blank">#${pr.number}</a>
       <span class="card-repo">${pr.short_repo}</span>
-      ${marvinTag}
+      ${newTag}
+      ${age}
+      ${cherryPickTag}
+      ${reviewHtml}
     </div>
     <div class="card-title">${pr.title}</div>
-    ${meta.length || originTag ? `<div class="card-meta">${originTag}${meta.length ? (originTag ? "<br>" : "") + meta.join(" &middot; ") : ""}</div>` : ""}
+    ${meta.length ? `<div class="card-meta">${meta.join(" &middot; ")}</div>` : ""}
     <div class="card-footer">
-      <select class="card-state" style="color:${stateColor}"
+      <select class="card-state" style="background:${stateColor}"
         data-prkey="${key}" onchange="handleStateChange(this)">
         ${stateOpts}
       </select>
-      <span class="badge" style="background:${ciBg}">CI:${pr.ci}</span>
+      <div class="card-badges">${ciHtml(pr.ci)}${ciHistory}</div>
     </div>
   </div>`;
 }
@@ -823,7 +1153,7 @@ function toggleFilter(type, value) {
 }
 
 function renderFilters() {
-  const regular = ALL_PRS.filter(pr => !pr.is_marvin);
+  const regular = ALL_PRS;
 
   // Count states and CI statuses across all regular PRs.
   const stateCounts = {};
@@ -861,7 +1191,10 @@ function renderFilters() {
 
 function renderMyPrs() {
   const board = document.getElementById("board");
-  let regular = ALL_PRS.filter(pr => !pr.is_marvin);
+  let regular = ALL_PRS;
+
+  // Apply search filter.
+  regular = regular.filter(matchesSearch);
 
   // Apply active filters.
   if (activeFilters.state) {
@@ -904,17 +1237,6 @@ function renderMyPrs() {
   document.getElementById("my-prs-count").textContent = regular.length;
 }
 
-function renderMarvinPicks() {
-  const marvin = ALL_PRS.filter(pr => pr.is_marvin);
-  const container = document.getElementById("marvin-cards");
-  document.getElementById("marvin-picks-count").textContent = marvin.length;
-
-  if (!marvin.length) {
-    container.innerHTML = `<div class="empty-state">No pending marvin cherry-picks</div>`;
-    return;
-  }
-  container.innerHTML = marvin.map(renderCard).join("");
-}
 
 // --- Item priority helpers (review requests + assigned issues) ---
 function itemKey(type, item) {
@@ -995,13 +1317,13 @@ function handleItemDrop(e) {
 // --- Rendering: Review Requests ---
 function renderReviewRequests() {
   document.getElementById("review-requests-count").textContent = REVIEW_REQUESTS.length;
-  if (!REVIEW_REQUESTS.length) {
+  const filtered = REVIEW_REQUESTS.filter(matchesSearch);
+  if (!filtered.length) {
     document.getElementById("review-requests-board").innerHTML =
-      `<div class="empty-state" style="grid-column:1/-1">No pending review requests</div>`;
+      `<div class="empty-state" style="grid-column:1/-1">${searchQuery ? "No matching review requests" : "No pending review requests"}</div>`;
     return;
   }
-  renderItemBoard("review-requests-board", REVIEW_REQUESTS, "review_request", rr => {
-    const ciBg = CI_COLORS[rr.ci] || "#768390";
+  renderItemBoard("review-requests-board", filtered, "review_request", rr => {
     const draftTag = rr.draft ? `<span class="draft-tag">DRAFT</span>` : "";
     const key = itemKey("review_request", rr);
     const isChanged = !!pendingItemChanges[key];
@@ -1017,7 +1339,7 @@ function renderReviewRequests() {
       <div class="card-title">${rr.title}</div>
       <div class="card-footer">
         <span class="author-tag">by ${rr.author}</span>
-        <span class="badge" style="background:${ciBg}">CI:${rr.ci}</span>
+        ${ciHtml(rr.ci)}
       </div>
     </div>`;
   });
@@ -1034,12 +1356,13 @@ function labelClass(label) {
 
 function renderAssignedIssues() {
   document.getElementById("assigned-issues-count").textContent = ASSIGNED_ISSUES.length;
-  if (!ASSIGNED_ISSUES.length) {
+  const filteredIssues = ASSIGNED_ISSUES.filter(matchesSearch);
+  if (!filteredIssues.length) {
     document.getElementById("assigned-issues-board").innerHTML =
-      `<div class="empty-state" style="grid-column:1/-1">No assigned issues</div>`;
+      `<div class="empty-state" style="grid-column:1/-1">${searchQuery ? "No matching issues" : "No assigned issues"}</div>`;
     return;
   }
-  renderItemBoard("assigned-issues-board", ASSIGNED_ISSUES, "assigned_issue", issue => {
+  renderItemBoard("assigned-issues-board", filteredIssues, "assigned_issue", issue => {
     const labels = (issue.labels || []).map(l =>
       `<span class="label-tag ${labelClass(l)}">${l}</span>`
     ).join(" ");

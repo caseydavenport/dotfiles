@@ -6,8 +6,12 @@ echo "=== Installing terminal bling ==="
 echo ">> Updating apt..."
 sudo apt-get update -qq
 
-echo ">> Installing lolcat and bat..."
-sudo apt-get install -y lolcat bat
+echo ">> Installing lolcat..."
+sudo apt-get install -y lolcat
+
+echo ">> Installing bat (0.24.0 to match delta)..."
+wget -q https://github.com/sharkdp/bat/releases/download/v0.24.0/bat_0.24.0_amd64.deb -O /tmp/bat.deb
+sudo dpkg -i /tmp/bat.deb
 
 echo ">> Installing eza..."
 sudo mkdir -p /etc/apt/keyrings
@@ -46,6 +50,13 @@ echo ">> Installing kubecolor..."
 if ! command -v kubecolor &>/dev/null; then
     wget -q https://github.com/kubecolor/kubecolor/releases/download/v0.4.0/kubecolor_0.4.0_linux_amd64.tar.gz -O /tmp/kubecolor.tar.gz
     sudo tar -xzf /tmp/kubecolor.tar.gz -C /usr/local/bin kubecolor
+fi
+
+echo ">> Installing kubefwd..."
+if ! command -v kubefwd &>/dev/null; then
+    KUBEFWD_URL=$(curl -fsSL https://api.github.com/repos/txn2/kubefwd/releases/latest | grep -oP '"browser_download_url":\s*"\K[^"]*Linux_x86_64\.tar\.gz(?=")')
+    wget -q "$KUBEFWD_URL" -O /tmp/kubefwd.tar.gz
+    sudo tar -xzf /tmp/kubefwd.tar.gz -C /usr/local/bin kubefwd
 fi
 
 echo ">> Installing kubectl krew plugins (tree, neat, images, who-can)..."

@@ -60,10 +60,10 @@ def build_pr_list(data):
                 "cherry_pick_of": pr.get("cherry_pick_of", ""),
                 "depends_on": pr.get("depends_on", []),
                 "blocks": pr.get("blocks", []),
-                "is_marvin": False,
+                "is_cherry_pick": False,
             })
 
-    for pick in data.get("marvin_cherry_picks", []):
+    for pick in data.get("cherry_picks", []):
         repo_name = pick.get("repo", "tigera/calico-private")
         reviews = pick.get("reviews", [])
         has_approved = any("APPROVED" in r for r in reviews)
@@ -89,7 +89,7 @@ def build_pr_list(data):
             "cherry_pick_of": "",
             "depends_on": [],
             "blocks": [],
-            "is_marvin": True,
+            "is_cherry_pick": True,
             "origin": pick.get("origin", ""),
         })
 
@@ -359,7 +359,7 @@ def generate_html(data):
   .card-meta .cherry {{ color: #a371f7; }}
   .card-meta .review {{ color: #bf8700; }}
   .card-meta .review.approved {{ color: #2da44e; }}
-  .marvin-tag {{
+  .cherry-pick-tag {{
     background: #a371f7;
     color: #fff;
     font-size: 10px;
@@ -381,11 +381,11 @@ def generate_html(data):
     font-weight: 600;
   }}
 
-  /* Marvin section */
-  .marvin-section {{
+  /* Cherry-picks section */
+  .cherry-picks-section {{
     margin-top: 8px;
   }}
-  .marvin-section h2 {{
+  .cherry-picks-section h2 {{
     font-size: 16px;
     color: #a371f7;
     margin-bottom: 8px;
@@ -393,17 +393,17 @@ def generate_html(data):
     align-items: center;
     gap: 8px;
   }}
-  .marvin-section h2 .count {{
+  .cherry-picks-section h2 .count {{
     font-size: 12px;
     color: var(--text-muted);
     font-weight: normal;
   }}
-  .marvin-cards {{
+  .cherry-picks-cards {{
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
   }}
-  .marvin-cards .card {{
+  .cherry-picks-cards .card {{
     width: 280px;
     cursor: default;
   }}
@@ -540,7 +540,7 @@ def generate_html(data):
 
 <div class="tab-panel active" id="panel-my-prs">
   <div class="board" id="board"></div>
-  <div class="marvin-section" id="marvin-section"></div>
+  <div class="cherry-picks-section" id="cherry-picks-section"></div>
 </div>
 
 <div class="tab-panel" id="panel-review-requests">
@@ -576,9 +576,9 @@ const PRIORITY_COLORS = {{
   "parked": "#484f58",
 }};
 const STATE_COLORS = {{
-  "needs-review": "#2da44e",
-  "reviewed": "#bf8700",
-  "mergeable": "#1f6feb",
+  "needs-review": "#bf8700",
+  "reviewed": "#cf222e",
+  "mergeable": "#2da44e",
   "draft": "#768390",
   "needs-work": "#cf222e",
 }};
@@ -751,7 +751,7 @@ function renderCard(pr) {{
   if (pr.blocks?.length) meta.push(`blocks: ${{pr.blocks.join(", ")}}`);
   if (pr.notes) meta.push(pr.notes);
 
-  const marvinTag = pr.is_marvin ? `<span class="marvin-tag">MARVIN</span>` : "";
+  const cherryPickTag = pr.is_cherry_pick ? `<span class="cherry-pick-tag">CHERRY-PICK</span>` : "";
   const originTag = pr.origin ? `<span class="cherry">from ${{pr.origin}}</span>` : "";
 
   return `<div class="card ${{isChanged ? "changed" : ""}}" draggable="true"
@@ -761,7 +761,7 @@ function renderCard(pr) {{
     <div class="card-top">
       <a href="${{pr.url}}" target="_blank">#${{pr.number}}</a>
       <span class="card-repo">${{pr.short_repo}}</span>
-      ${{marvinTag}}
+      ${{cherryPickTag}}
     </div>
     <div class="card-title">${{pr.title}}</div>
     <div class="card-badges">
@@ -777,8 +777,8 @@ function renderCard(pr) {{
 
 function renderMyPrs() {{
   const board = document.getElementById("board");
-  const regular = ALL_PRS.filter(pr => !pr.is_marvin);
-  const marvin = ALL_PRS.filter(pr => pr.is_marvin);
+  const regular = ALL_PRS.filter(pr => !pr.is_cherry_pick);
+  const picks = ALL_PRS.filter(pr => pr.is_cherry_pick);
 
   // Group by current priority
   const grouped = {{}};
@@ -809,14 +809,14 @@ function renderMyPrs() {{
     </div>`;
   }}).join("");
 
-  // Marvin section
-  const marvinSection = document.getElementById("marvin-section");
-  if (marvin.length) {{
-    marvinSection.innerHTML = `
-      <h2>Marvin Cherry-picks <span class="count">(${{marvin.length}})</span></h2>
-      <div class="marvin-cards">${{marvin.map(renderCard).join("")}}</div>`;
+  // Cherry-picks section
+  const cherryPicksSection = document.getElementById("cherry-picks-section");
+  if (picks.length) {{
+    cherryPicksSection.innerHTML = `
+      <h2>Cherry-picks <span class="count">(${{picks.length}})</span></h2>
+      <div class="cherry-picks-cards">${{picks.map(renderCard).join("")}}</div>`;
   }} else {{
-    marvinSection.innerHTML = "";
+    cherryPicksSection.innerHTML = "";
   }}
 
   // Update tab count

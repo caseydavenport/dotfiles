@@ -38,7 +38,7 @@ Run `date` to check the current date and time.
 - Comments explain "why", not "what". No comments on self-documenting code.
 - Doc comments start with the exported name: `// Foo does...`
 - Always use safe type assertions (`obj, ok := x.(*T)`) — never bare assertions that can panic.
-- Never ignore error returns. Always check and handle them, even from cache lookups or seemingly infallible calls.
+- Never ignore error returns. Always check and handle them, even from cache lookups, cleanup/teardown code, or seemingly infallible calls. At minimum, log the error.
 
 ## Copyright
 
@@ -49,9 +49,9 @@ Modified files: update the end year to 2026 (e.g., `2023-2026`).
 
 - When asked to work on a PR or branch, and the local repo either has pending changes you didn't make or is not on master, perform the work in a new temporary git worktree under `/tmp` (e.g., `git worktree add /tmp/wt-<description> <branch>`). After pushing and creating the PR, clean up with `git worktree remove /tmp/wt-<description>` (use `--force` if needed for untracked files).
 - Push branches to my personal fork (`cd4` remote) for: `projectcalico/*`,
-  `tigera/operator`. For other `tigera/*` repos, push to origin. For any other
-  repos, check local git remotes and prefer my personal fork if it exists and
-  is pushable.
+  `tigera/operator`, `tigera/calico-private`. For other `tigera/*` repos, push
+  to origin. For any other repos, check local git remotes and prefer my personal
+  fork if it exists and is pushable.
 - Branch names: use the format `casey-<2-3 word description>` (e.g., `casey-flowtable-support`, `casey-webhook-manifest`, `casey-ifupdate-race`).
 - Create new commits rather than amending unless I explicitly ask.
 - Never force push without asking first.

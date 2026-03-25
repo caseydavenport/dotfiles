@@ -57,7 +57,7 @@ func handleGetPRs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, data)
 }
 
-// handlePatchPRs applies a set of changes (state, priority, notes) to PRs.
+// handlePatchPRs applies a set of changes (state, priority, notes, triaged) to PRs.
 func handlePatchPRs(w http.ResponseWriter, r *http.Request) {
 	var req PatchRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -127,9 +127,13 @@ func applyChange(data *TrackerData, change PRChange) bool {
 				}
 				if change.Priority != nil {
 					pr.Priority = *change.Priority
+					pr.Triaged = true
 				}
 				if change.Notes != nil {
 					pr.Notes = *change.Notes
+				}
+				if change.Triaged != nil {
+					pr.Triaged = *change.Triaged
 				}
 				return true
 			}

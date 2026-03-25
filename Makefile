@@ -1,7 +1,7 @@
 .PHONY: setup symlinks zshrc tmux claude gitconfig p10k dircolors \
        zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
        zsh-syntax-highlighting zsh-history-substring-search fzf \
-       terminal-bling neovim nvimrc packages apt docker help
+       terminal-bling neovim nvimrc packages apt docker help bat-themes
 
 ############################################################
 # Default target: show available targets
@@ -27,7 +27,7 @@ setup: symlinks zsh-addons terminal-bling
 ############################################################
 # Symlink config files into place
 ############################################################
-symlinks: zshrc tmux claude gitconfig p10k dircolors
+symlinks: zshrc tmux claude gitconfig p10k dircolors delta bat-themes
 
 zshrc:
 	ln -sf $(CURDIR)/.zshrc ${HOME}/.zshrc
@@ -52,6 +52,17 @@ p10k:
 
 dircolors:
 	ln -sf $(CURDIR)/.dircolors ${HOME}/.dircolors
+
+delta:
+	mkdir -p ${HOME}/.config/delta
+	ln -sf $(CURDIR)/.config/delta/catppuccin.gitconfig ${HOME}/.config/delta/catppuccin.gitconfig
+
+bat-themes:
+	mkdir -p ${HOME}/.config/bat/themes
+	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Mocha.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Mocha.tmTheme"
+	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Macchiato.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Macchiato.tmTheme"
+	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Frappe.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Frappe.tmTheme"
+	bat cache --build
 
 nvimrc:
 	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom

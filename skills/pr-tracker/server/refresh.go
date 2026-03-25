@@ -64,7 +64,7 @@ func refreshFromGitHub(existing *TrackerData) (*TrackerData, []error) {
 	}
 	wg.Wait()
 
-	// Build a set of Casey's calico OSS PR numbers so we can filter marvin
+	// Build a set of Casey's calico OSS PR numbers so we can filter
 	// cherry-picks to only those originating from Casey's PRs.
 	caseyOSSPRs := map[string]bool{}
 	for _, repo := range result.Repos {
@@ -75,31 +75,89 @@ func refreshFromGitHub(existing *TrackerData) (*TrackerData, []error) {
 		}
 	}
 
-	// Fetch marvin cherry-picks (calico-private only), filtered to Casey's PRs.
-	picks, err := fetchMarvinPicks()
+	// Fetch cherry-picks (calico-private only). Promote relevant picks
+	// (authored by Casey, or referencing Casey's OSS PRs with the
+	// merge-oss-cherry-pick label) to full PRs in the calico-private
+	// repo so they appear in "My PRs" with full CI/review/priority.
+	picks, err := fetchCherryPicks()
 	if err != nil {
-		errs = append(errs, fmt.Errorf("marvin picks: %w", err))
-		// Preserve existing picks on failure.
-		for _, repo := range existing.Repos {
-			if repo.Name == "tigera/calico-private" {
-				for i := range result.Repos {
-					if result.Repos[i].Name == "tigera/calico-private" {
-						result.Repos[i].MarvinCherryPicks = repo.MarvinCherryPicks
+		errs = append(errs, fmt.Errorf("cherry picks: %w", err))
+	} else {
+		for i := range result.Repos {
+			if result.Repos[i].Name != "tigera/calico-private" {
+				continue
+			}
+			// Build set of PR numbers already in the list to avoid duplicates.
+			seen := map[int]bool{}
+			for _, pr := range result.Repos[i].PRs {
+				seen[pr.Number] = true
+			}
+			for _, pick := range picks {
+				if seen[pick.Number] {
+					continue
+				}
+				if pick.Author == "caseydavenport" || caseyOSSPRs[pick.OssPR] {
+					// Casey authored the pick or the OSS PR is still open.
+				} else if pick.OssPR != "" && isCaseyPR(pick.OssPR) {
+					// OSS PR is merged but was authored by Casey.
+				} else {
+					continue
+				}
+				// Promote to a full PR with CI and reviews.
+				ci := fetchCI("tigera/calico-private", pick.Number)
+				reviews := fetchReviews("tigera/calico-private", pick.Number)
+				state := deriveState(false, pick.ReviewDecision)
+				pr := PR{
+					Number:       pick.Number,
+					Title:        pick.Title,
+					Branch:       pick.Branch,
+					State:        state,
+					CI:           ci,
+					Reviews:      reviews,
+					CherryPickOf: pick.OssPR,
+					CreatedAt:    pick.CreatedAt,
+					Author:       pick.Author,
+				}
+				key := fmt.Sprintf("tigera/calico-private#%d", pick.Number)
+				if old, ok := existingPRs[key]; ok {
+					pr.Priority = old.Priority
+					pr.Notes = old.Notes
+					pr.DependsOn = old.DependsOn
+					pr.Blocks = old.Blocks
+					pr.Triaged = old.Triaged
+					history := old.CIHistory
+					if ci != "pending" {
+						if len(history) == 0 || history[0] != ci {
+							history = append([]string{ci}, history...)
+						}
+						if len(history) > 8 {
+							history = history[:8]
+						}
+					}
+					pr.CIHistory = history
+				} else {
+					pr.Priority = "parked"
+					if ci != "pending" {
+						pr.CIHistory = []string{ci}
 					}
 				}
+				result.Repos[i].PRs = append(result.Repos[i].PRs, pr)
 			}
-		}
-	} else {
-		var caseyPicks []MarvinPick
-		for _, pick := range picks {
-			if caseyOSSPRs[pick.OssPR] {
-				caseyPicks = append(caseyPicks, pick)
+			// Cross-reference: set CherryPickOf on Casey's own PRs that
+			// also appear in the cherry-pick list (e.g. Casey-authored
+			// cherry-picks of his own OSS PRs).
+			pickOSS := map[int]string{}
+			for _, pick := range picks {
+				if pick.OssPR != "" {
+					pickOSS[pick.Number] = pick.OssPR
+				}
 			}
-		}
-		for i := range result.Repos {
-			if result.Repos[i].Name == "tigera/calico-private" {
-				result.Repos[i].MarvinCherryPicks = caseyPicks
+			for j := range result.Repos[i].PRs {
+				if ref, ok := pickOSS[result.Repos[i].PRs[j].Number]; ok {
+					result.Repos[i].PRs[j].CherryPickOf = ref
+				}
 			}
+			break
 		}
 	}
 
@@ -148,7 +206,7 @@ func refreshFromGitHub(existing *TrackerData) (*TrackerData, []error) {
 
 func fetchRepoPRs(repo string, existing map[string]*PR) ([]PR, error) {
 	out, err := ghJSON("pr", "list", "--repo", repo, "--author", "caseydavenport", "--state", "open",
-		"--json", "number,title,isDraft,reviewDecision,labels,headRefName,baseRefName", "--limit", "50")
+		"--json", "number,title,isDraft,reviewDecision,labels,headRefName,baseRefName,createdAt", "--limit", "50")
 	if err != nil {
 		return nil, err
 	}
@@ -159,6 +217,7 @@ func fetchRepoPRs(repo string, existing map[string]*PR) ([]PR, error) {
 		IsDraft        bool   `json:"isDraft"`
 		ReviewDecision string `json:"reviewDecision"`
 		HeadRefName    string `json:"headRefName"`
+		CreatedAt      string `json:"createdAt"`
 		Labels         []struct {
 			Name string `json:"name"`
 		} `json:"labels"`
@@ -174,12 +233,14 @@ func fetchRepoPRs(repo string, existing map[string]*PR) ([]PR, error) {
 		reviews := fetchReviews(repo, r.Number)
 
 		pr := PR{
-			Number:  r.Number,
-			Title:   r.Title,
-			Branch:  r.HeadRefName,
-			State:   state,
-			CI:      ci,
-			Reviews: reviews,
+			Number:    r.Number,
+			Title:     r.Title,
+			Branch:    r.HeadRefName,
+			State:     state,
+			CI:        ci,
+			Reviews:   reviews,
+			CreatedAt: r.CreatedAt,
+			Author:    "caseydavenport",
 		}
 
 		// Preserve user-set fields from existing data.
@@ -190,8 +251,26 @@ func fetchRepoPRs(repo string, existing map[string]*PR) ([]PR, error) {
 			pr.DependsOn = old.DependsOn
 			pr.Blocks = old.Blocks
 			pr.CherryPickOf = old.CherryPickOf
+			pr.Triaged = old.Triaged
+
+			// Maintain CI history: skip "pending" entries, prepend
+			// current status if it differs from the most recent, keep last 8.
+			history := old.CIHistory
+			if ci != "pending" {
+				if len(history) == 0 || history[0] != ci {
+					history = append([]string{ci}, history...)
+				}
+				if len(history) > 8 {
+					history = history[:8]
+				}
+			}
+			pr.CIHistory = history
 		} else {
 			pr.Priority = "parked"
+			if ci != "pending" {
+				pr.CIHistory = []string{ci}
+			}
+			pr.Triaged = false
 		}
 
 		prs = append(prs, pr)
@@ -280,35 +359,68 @@ func fetchReviews(repo string, number int) []string {
 
 var ossPRPattern = regexp.MustCompile(`projectcalico/calico#(\d+)`)
 
-func fetchMarvinPicks() ([]MarvinPick, error) {
-	out, err := ghJSON("pr", "list", "--repo", "tigera/calico-private", "--author", "marvin-tigera",
+// isCaseyPR checks if a PR reference like "projectcalico/calico#12219"
+// was authored by Casey. Used to identify merged OSS PRs that spawned
+// cherry-picks.
+func isCaseyPR(prRef string) bool {
+	m := ossPRPattern.FindStringSubmatch(prRef)
+	if len(m) < 2 {
+		return false
+	}
+	out, err := ghJSON("pr", "view", m[1], "--repo", "projectcalico/calico", "--json", "author")
+	if err != nil {
+		return false
+	}
+	var data struct {
+		Author struct {
+			Login string `json:"login"`
+		} `json:"author"`
+	}
+	if err := json.Unmarshal(out, &data); err != nil {
+		return false
+	}
+	return data.Author.Login == "caseydavenport"
+}
+
+func fetchCherryPicks() ([]CherryPick, error) {
+	out, err := ghJSON("pr", "list", "--repo", "tigera/calico-private",
 		"--state", "open", "--label", "merge-oss-cherry-pick",
-		"--json", "number,title,body,baseRefName", "--limit", "20")
+		"--json", "number,title,body,baseRefName,headRefName,author,reviewDecision,createdAt", "--limit", "50")
 	if err != nil {
 		return nil, err
 	}
 
 	var raw []struct {
-		Number      int    `json:"number"`
-		Title       string `json:"title"`
-		Body        string `json:"body"`
-		BaseRefName string `json:"baseRefName"`
+		Number         int    `json:"number"`
+		Title          string `json:"title"`
+		Body           string `json:"body"`
+		BaseRefName    string `json:"baseRefName"`
+		HeadRefName    string `json:"headRefName"`
+		ReviewDecision string `json:"reviewDecision"`
+		CreatedAt      string `json:"createdAt"`
+		Author         struct {
+			Login string `json:"login"`
+		} `json:"author"`
 	}
 	if err := json.Unmarshal(out, &raw); err != nil {
-		return nil, fmt.Errorf("parsing marvin picks: %w", err)
+		return nil, fmt.Errorf("parsing cherry picks: %w", err)
 	}
 
-	picks := make([]MarvinPick, 0, len(raw))
+	picks := make([]CherryPick, 0, len(raw))
 	for _, r := range raw {
 		ossPR := ""
 		if m := ossPRPattern.FindStringSubmatch(r.Body); len(m) > 1 {
 			ossPR = "projectcalico/calico#" + m[1]
 		}
-		picks = append(picks, MarvinPick{
-			Number: r.Number,
-			Title:  r.Title,
-			Base:   r.BaseRefName,
-			OssPR:  ossPR,
+		picks = append(picks, CherryPick{
+			Number:         r.Number,
+			Title:          r.Title,
+			Base:           r.BaseRefName,
+			Branch:         r.HeadRefName,
+			Author:         r.Author.Login,
+			OssPR:          ossPR,
+			ReviewDecision: r.ReviewDecision,
+			CreatedAt:      r.CreatedAt,
 		})
 	}
 	return picks, nil
