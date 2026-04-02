@@ -62,50 +62,16 @@ assigned_issues:
 
 Also track **cherry-picks**: open PRs in `tigera/calico-private` with label `merge-oss-cherry-pick` that are either authored by Casey or reference one of Casey's open OSS PRs in the body (pattern: `projectcalico/calico#NNNN`). These carry the same metadata fields as regular PRs (state, priority, ci, reviews, notes).
 
-## Mode 1: Refresh ("refresh PRs")
-
-Triggers: "refresh PRs", "refresh my PRs", "update PR data". This fetches fresh data from GitHub and writes the data file. It does **not** display anything or open the dashboard — it's a silent background sync.
-
-1. Read the data file (to preserve priority, notes, depends_on, blocks)
-2. For each tracked repo, fetch all open PRs:
-   ```bash
-   gh pr list --repo <repo> --author caseydavenport --state open --json number,title,isDraft,reviewDecision,labels,headRefName,baseRefName --limit 50
-   ```
-3. For each PR, fetch CI and review status (same as auto-update)
-4. Also fetch cherry-picks:
-   ```bash
-   gh pr list --repo tigera/calico-private --state open --label merge-oss-cherry-pick --json number,title,body,baseRefName,author --limit 50
-   ```
-   Parse the body for `projectcalico/calico#NNNN` references to link back to Casey's PRs. Include picks that are either authored by Casey or whose `oss_pr` matches one of Casey's open calico PRs — discard the rest.
-5. Fetch PRs where Casey is a requested reviewer, has already reviewed, or is assigned (three queries, deduplicated):
-   ```bash
-   gh search prs --state=open --json number,title,repository,url,author,isDraft --limit 50 -- 'user-review-requested:caseydavenport'
-   gh search prs --reviewed-by=caseydavenport --state=open --json number,title,repository,url,author,isDraft --limit 50 -- -author:caseydavenport
-   gh search prs --state=open --assignee=caseydavenport --json number,title,repository,url,author,isDraft --limit 50
-   ```
-   Deduplicate by repo#number. For each PR, also fetch CI status:
-   ```bash
-   gh pr checks <number> --repo <repo> 2>&1 | grep -i "semaphore\|Argo"
-   ```
-6. Fetch GitHub issues assigned to Casey:
-   ```bash
-   gh search issues --assignee=caseydavenport --state=open --json number,title,repository,url,labels --limit 50
-   ```
-7. Merge with existing data: preserve user-set fields, update GitHub-derived fields. New PRs (not already in the data file) default to `priority: parked` — Casey will promote them manually when ready.
-8. Remove PRs that are no longer open (they've been merged or closed)
-9. Write the data file
-10. Confirm with a one-liner: "Refreshed N PRs, M review requests, K issues across 3 repos."
-
-## Mode 2: Show ("show PRs", "my PRs", "PR status", "check my PRs")
+## Mode 1: Show ("show PRs", "my PRs", "PR status", "check my PRs")
 
 Triggers: "show PRs", "show my PRs", "my PRs", "PR status", "check my PRs". This displays PR data in the terminal from the local data file. Does **not** fetch from GitHub or open the browser.
 
 1. Read the data file
 2. Print a concise terminal summary grouped by priority (see Display format below)
 
-## Mode 3: Browse ("browse PRs", "open PR dashboard")
+## Mode 2: Browse / Start / Refresh ("browse PRs", "open PR dashboard", "start pr-tracker", "refresh PRs")
 
-Triggers: "browse PRs", "browse my PRs", "open PR dashboard", "PR dashboard". This starts the dashboard in a Docker container and opens the browser.
+Triggers: "browse PRs", "browse my PRs", "open PR dashboard", "PR dashboard", "start pr-tracker", "start my pr-tracker", "refresh PRs", "refresh my PRs", "update PR data". This starts the dashboard in a Docker container and opens the browser. Refreshing is handled by the dashboard's Go server — do **not** run `gh` commands manually.
 
 1. Check if the container is already running:
    ```bash
@@ -136,6 +102,8 @@ Triggers: "browse PRs", "browse my PRs", "open PR dashboard", "PR dashboard". Th
 
 To stop the dashboard: `docker stop pr-dashboard`
 
+Just confirm: "Dashboard server started."
+
 ## Deriving state from GitHub data
 
 - `isDraft == true` → `draft`
@@ -151,7 +119,7 @@ Cherry-pick detection:
 
 ## Display format
 
-### Terminal display (Mode 3: Show)
+### Terminal display (Mode 1: Show)
 
 Print a concise text summary grouped by priority, one line per PR. Do **not** open the browser.
 
@@ -176,19 +144,9 @@ Print a concise text summary grouped by priority, one line per PR. Do **not** op
   operator#4400 [bug] Operator panic on upgrade
 ```
 
-### Browser dashboard (Mode 3: Browse)
+### Browser dashboard (Mode 2: Browse)
 
 Start the Docker container. Do **not** print the terminal summary.
-
-```bash
-docker build -t pr-dashboard ~/.claude/skills/pr-tracker/server
-docker run -d --rm --name pr-dashboard \
-  -p 48923:48923 \
-  -e GITHUB_TOKEN="$GITHUB_TOKEN" \
-  -v ~/.claude/projects/-home-casey-repos-gopath-src-github-com-projectcalico-calico/memory:/data \
-  pr-dashboard
-xdg-open http://127.0.0.1:48923
-```
 
 API endpoints:
 - `GET /api/prs` — returns full tracker data as JSON
@@ -196,8 +154,6 @@ API endpoints:
 - `POST /api/refresh` — fetches fresh data from GitHub via `gh` CLI, updates YAML, returns updated data
 
 Changes made in the dashboard are persisted immediately to the YAML file — no download/apply step needed.
-
-Just confirm: "Dashboard server started."
 
 ## Updating metadata
 

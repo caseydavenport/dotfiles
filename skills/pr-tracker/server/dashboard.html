@@ -603,6 +603,7 @@
 <div class="header">
   <h1>PR Dashboard</h1>
   <span class="subtitle" id="last-refreshed"></span>
+  <span class="subtitle" id="next-refresh" style="margin-left:4px"></span>
   <div class="search-bar">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="opacity:0.5">
       <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/>
@@ -999,6 +1000,7 @@ async function refreshFromGitHub() {
       Object.keys(pendingChanges).forEach(k => delete pendingChanges[k]);
       updateApplyBar();
       await loadData();
+      resetRefreshTimer();
       showToast("Refreshed from GitHub", "success");
     } else {
       const err = await resp.json();
@@ -1385,12 +1387,34 @@ function renderAssignedIssues() {
 // Initial load
 loadData();
 
-// Auto-refresh every 30 minutes.
+// Auto-refresh every 10 minutes.
+const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+let nextRefreshTime = Date.now() + REFRESH_INTERVAL_MS;
+
+function resetRefreshTimer() {
+  nextRefreshTime = Date.now() + REFRESH_INTERVAL_MS;
+}
+
+setInterval(() => {
+  const remaining = Math.max(0, Math.round((nextRefreshTime - Date.now()) / 1000));
+  const el = document.getElementById("next-refresh");
+  if (remaining <= 0) {
+    el.textContent = "· refreshing…";
+  } else {
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    el.textContent = "· next refresh in " + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+}, 1000);
+
 setInterval(() => {
   if (Object.keys(pendingChanges).length === 0 && Object.keys(pendingItemChanges).length === 0) {
     refreshFromGitHub();
+    resetRefreshTimer();
+  } else {
+    resetRefreshTimer();
   }
-}, 30 * 60 * 1000);
+}, REFRESH_INTERVAL_MS);
 </script>
 </body>
 </html>

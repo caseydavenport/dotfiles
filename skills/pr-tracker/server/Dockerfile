@@ -14,4 +14,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY --from=build /pr-dashboard /usr/local/bin/pr-dashboard
 ENV LISTEN_ALL=1
-ENTRYPOINT ["pr-dashboard", "--no-browse", "--data", "/data/pr_tracker.yaml"]
+# gh CLI uses GH_TOKEN; if only GITHUB_TOKEN is provided, alias it.
+ENTRYPOINT ["sh", "-c", "export GH_TOKEN=\"${GH_TOKEN:-$GITHUB_TOKEN}\"; exec pr-dashboard --no-browse --data /data/pr_tracker.yaml"]
