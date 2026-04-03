@@ -114,7 +114,7 @@ alias vim=nvim
 export EDITOR=nvim
 
 # Alias watch so that it works with other aliased commands.
-alias watch='watch '
+alias watch='watch --color '
 
 alias k='kubectl'
 alias kn='kubectl -n calico-system'
@@ -124,6 +124,25 @@ alias kl='kubectl logs -f'
 alias kex='kubectl exec -it'
 alias kaf='kubectl apply -f'
 alias kgts='kubectl get tigerastatus'
+
+# calico-node log helper: cnlogs [node-name] [stern flags...]
+# Uses command kubectl to bypass the kubecolor alias (ANSI codes break jsonpath).
+cnlogs() {
+  local ns
+  ns=$(command kubectl get pods -A -l k8s-app=calico-node -o jsonpath='{.items[0].metadata.namespace}' 2>/dev/null)
+  local node="${1}"
+  if [[ -z "$node" ]]; then
+    node=$(command kubectl -n "$ns" get pods -l k8s-app=calico-node -o jsonpath='{.items[0].spec.nodeName}' 2>/dev/null)
+  fi
+  local pod
+  pod=$(command kubectl -n "$ns" get pods -l k8s-app=calico-node --field-selector "spec.nodeName=${node}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+  if [[ -z "$pod" ]]; then
+    echo "No calico-node pod on node '$node'. Pods:" >&2
+    command kubectl -n "$ns" get pods -l k8s-app=calico-node -o wide
+    return 1
+  fi
+  stern -n "$ns" "$pod" -c calico-node "${@:2}"
+}
 
 alias gs='git status'
 alias gb='git branch'
@@ -139,7 +158,7 @@ gw() {
 }
 
 # Use kubecolor for colorized kubectl output if available.
-command -v kubecolor &>/dev/null && alias kubectl='kubecolor' && alias k='kubecolor'
+command -v kubecolor &>/dev/null && alias kubectl='kubecolor' && alias k='kubecolor' && compdef kubecolor=kubectl
 
 
 # Add local bin to path
@@ -153,8 +172,9 @@ export PATH=$PATH:$HOME/.krew/bin
 setopt auto_cd
 cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/ $GOPATH/src/github.com/tigera $GOPATH/src/k8s.io)
 
-# Source github token for hub commands.
+# Source local token / env files if they exist.
 [ -f ~/.github_token ] && source ~/.github_token
+[ -f ~/.semaphore_token ] && source ~/.semaphore_token
 [ -f ~/.npm_token ] && source ~/.npm_token
 [ -f ~/.cherry_pick_config ] && source ~/.cherry_pick_config
 
