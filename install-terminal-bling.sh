@@ -46,6 +46,11 @@ if ! command -v stern &>/dev/null; then
     sudo tar -xzf /tmp/stern.tar.gz -C /usr/local/bin stern
 fi
 
+echo ">> Installing zoxide..."
+if ! command -v zoxide &>/dev/null; then
+    curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
+fi
+
 echo ">> Installing kubecolor..."
 if ! command -v kubecolor &>/dev/null; then
     wget -q https://github.com/kubecolor/kubecolor/releases/download/v0.4.0/kubecolor_0.4.0_linux_amd64.tar.gz -O /tmp/kubecolor.tar.gz

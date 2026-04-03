@@ -62,7 +62,7 @@ bat-themes:
 	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Mocha.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Mocha.tmTheme"
 	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Macchiato.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Macchiato.tmTheme"
 	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Frappe.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Frappe.tmTheme"
-	bat cache --build
+	$(shell command -v bat || command -v batcat) cache --build
 
 nvimrc:
 	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
