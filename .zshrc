@@ -114,31 +114,61 @@ alias vim=nvim
 export EDITOR=nvim
 
 # Alias watch so that it works with other aliased commands.
-alias watch='watch --color '
+# viddy is a modern watch replacement with built-in color support.
+if command -v viddy &>/dev/null; then
+  alias watch='viddy '
+else
+  alias watch='watch --color '
+fi
 
 alias k='kubectl'
 alias kn='kubectl -n calico-system'
 alias kgc='echo "+ kubectl get pods -n calico-system -l k8s-app=calico-node"; kubectl get pods -n calico-system -l k8s-app=calico-node'
 alias kgt='echo "+ kubectl get pods -n calico-system -l k8s-app=calico-typha"; kubectl get pods -n calico-system -l k8s-app=calico-typha'
-alias kl='kubectl logs -f'
-alias kex='kubectl exec -it'
 alias kaf='kubectl apply -f'
 alias kgts='kubectl get tigerastatus'
+alias kev='kubectl get events --sort-by=.lastTimestamp'
+
+# fzf-powered kubectl helpers: pass namespace flags as needed, e.g. kl -n calico-system
+# Unalias names that oh-my-zsh kubectl plugin defines so we can override with functions.
+unalias kl kpf 2>/dev/null
+kl() {
+  local pod
+  pod=$(\kubectl get pods "$@" -o name | fzf --height=40%) || return
+  pod="${pod#pod/}"
+  stern "$pod" "$@"
+}
+kd() {
+  local pod
+  pod=$(\kubectl get pods "$@" -o name | fzf --height=40%) || return
+  \kubectl describe "$pod" "$@"
+}
+ke() {
+  local pod
+  pod=$(\kubectl get pods "$@" -o name | fzf --height=40%) || return
+  \kubectl exec -it "$pod" "$@" -- sh
+}
+kpf() {
+  local ports="$1"; shift
+  local pod
+  pod=$(\kubectl get pods "$@" -o name | fzf --height=40%) || return
+  \kubectl port-forward "$pod" "$ports" "$@"
+}
 
 # calico-node log helper: cnlogs [node-name] [stern flags...]
-# Uses command kubectl to bypass the kubecolor alias (ANSI codes break jsonpath).
+# Uses \kubectl to bypass the kubecolor alias (ANSI codes break jsonpath).
 cnlogs() {
   local ns
-  ns=$(command kubectl get pods -A -l k8s-app=calico-node -o jsonpath='{.items[0].metadata.namespace}' 2>/dev/null)
+  ns=$(\kubectl get pods -A -l k8s-app=calico-node -o jsonpath='{.items[0].metadata.namespace}' 2>/dev/null)
   local node="${1}"
   if [[ -z "$node" ]]; then
-    node=$(command kubectl -n "$ns" get pods -l k8s-app=calico-node -o jsonpath='{.items[0].spec.nodeName}' 2>/dev/null)
+    node=$(\kubectl -n "$ns" get pods -l k8s-app=calico-node -o jsonpath='{.items[0].spec.nodeName}' 2>/dev/null)
   fi
   local pod
-  pod=$(command kubectl -n "$ns" get pods -l k8s-app=calico-node --field-selector "spec.nodeName=${node}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+  pod=$(\kubectl -n "$ns" get pods -l k8s-app=calico-node --field-selector "spec.nodeName=${node}" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
   if [[ -z "$pod" ]]; then
     echo "No calico-node pod on node '$node'. Pods:" >&2
-    command kubectl -n "$ns" get pods -l k8s-app=calico-node -o wide
+    \kubectl -n "$ns" get pods -l k8s-app=calico-node -o wide
     return 1
   fi
   stern -n "$ns" "$pod" -c calico-node "${@:2}"

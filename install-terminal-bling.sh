@@ -40,10 +40,16 @@ if ! command -v k9s &>/dev/null; then
     sudo tar -xzf /tmp/k9s.tar.gz -C /usr/local/bin k9s
 fi
 
-echo ">> Installing stern..."
-if ! command -v stern &>/dev/null; then
-    wget -q https://github.com/stern/stern/releases/download/v1.31.0/stern_1.31.0_linux_amd64.tar.gz -O /tmp/stern.tar.gz
+echo ">> Installing stern (v1.32.0)..."
+if ! command -v stern &>/dev/null || [[ "$(stern --version 2>&1)" != *"1.32.0"* ]]; then
+    wget -q https://github.com/stern/stern/releases/download/v1.32.0/stern_1.32.0_linux_amd64.tar.gz -O /tmp/stern.tar.gz
     sudo tar -xzf /tmp/stern.tar.gz -C /usr/local/bin stern
+fi
+
+echo ">> Installing viddy..."
+if ! command -v viddy &>/dev/null; then
+    wget -q https://github.com/sachaos/viddy/releases/download/v1.3.0/viddy-v1.3.0-linux-x86_64.tar.gz -O /tmp/viddy.tar.gz
+    sudo tar -xzf /tmp/viddy.tar.gz -C /usr/local/bin viddy
 fi
 
 echo ">> Installing zoxide..."
@@ -64,12 +70,11 @@ if ! command -v kubefwd &>/dev/null; then
     sudo tar -xzf /tmp/kubefwd.tar.gz -C /usr/local/bin kubefwd
 fi
 
-echo ">> Installing kubectl krew plugins (tree, neat, images, who-can)..."
+echo ">> Installing kubectl krew plugins..."
 if command -v kubectl-krew &>/dev/null || [ -d "${HOME}/.krew" ]; then
-    kubectl krew install tree 2>/dev/null || true
-    kubectl krew install neat 2>/dev/null || true
-    kubectl krew install images 2>/dev/null || true
-    kubectl krew install who-can 2>/dev/null || true
+    for plugin in tree neat images who-can node-shell sniff resource-capacity; do
+        kubectl krew install "$plugin" 2>/dev/null || true
+    done
 fi
 
 echo ""
