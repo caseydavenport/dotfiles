@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+#
+# git-gone: Delete local branches that are no longer needed.
+#
+# Two-pass hybrid approach:
+#   1. Classic "gone" — branches whose remote tracking ref was pruned.
+#   2. PR-merged — branches with a merged GitHub PR (catches untracked branches).
+#
+# Usage:
+#   git gone          # dry-run (list what would be deleted)
+#   git gone -f       # actually delete
+#   git gone --force  # same as -f
+
+set -eo pipefail
+
+force=false
+if [[ "${1:-}" == "-f" || "${1:-}" == "--force" ]]; then
+    force=true
+fi
+
+current_branch=$(git symbolic-ref --short HEAD 2>/dev/null || true)
+default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || echo "master")
+
+declare -A to_delete  # branch -> reason
+
+# --- Pass 1: Classic gone (tracking ref was pruned) ---
+git fetch --all --prune --quiet 2>/dev/null
+
+while IFS= read -r line; do
+    branch=$(echo "$line" | awk '{print $1}')
+    [[ -z "$branch" ]] && continue
+    [[ "$branch" == "$current_branch" ]] && continue
+    [[ "$branch" == "$default_branch" ]] && continue
+    to_delete["$branch"]="tracking branch gone"
+done < <(git branch -vv | grep ': gone]')
+
+# --- Pass 2: Branches with merged PRs on GitHub ---
+# Only runs if gh is available and we're in a GitHub repo.
+if command -v gh &>/dev/null && gh repo view --json nameWithOwner &>/dev/null 2>&1; then
+    repo=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
+
+    while IFS= read -r branch; do
+        [[ -z "$branch" ]] && continue
+        [[ "$branch" == "$current_branch" ]] && continue
+        [[ "$branch" == "$default_branch" ]] && continue
+        [[ -v "to_delete[$branch]" ]] && continue  # already caught by pass 1
+
+        # Check all remotes for a merged PR matching this branch name.
+        # gh pr list searches by head ref name across forks.
+        merged=$(gh pr list \
+            --repo "$repo" \
+            --head "$branch" \
+            --state merged \
+            --json number,headRefName \
+            --jq '.[0].number // empty' 2>/dev/null || true)
+
+        if [[ -z "$merged" ]]; then
+            # Also try with the fork prefix (e.g., caseydavenport:branch).
+            for remote in $(git remote); do
+                fork_owner=$(git remote get-url "$remote" 2>/dev/null | sed -n 's|.*github.com[:/]\([^/]*\)/.*|\1|p')
+                [[ -z "$fork_owner" ]] && continue
+                merged=$(gh pr list \
+                    --repo "$repo" \
+                    --head "${fork_owner}:${branch}" \
+                    --state merged \
+                    --json number,headRefName \
+                    --jq '.[0].number // empty' 2>/dev/null || true)
+                [[ -n "$merged" ]] && break
+            done
+        fi
+
+        if [[ -n "$merged" ]]; then
+            to_delete["$branch"]="https://github.com/${repo}/pull/${merged} merged"
+        fi
+    done < <(git for-each-ref --format='%(refname:short)' refs/heads/)
+fi
+
+# --- Output / Delete ---
+if [[ ${#to_delete[@]} -eq 0 ]]; then
+    echo "No gone branches found."
+    exit 0
+fi
+
+if [[ "$force" == true ]]; then
+    for branch in $(echo "${!to_delete[@]}" | tr ' ' '\n' | sort); do
+        reason="${to_delete[$branch]}"
+        git branch -D "$branch"
+        echo "  ($reason)"
+    done
+else
+    echo "Branches to delete (run 'git gone -f' to delete):"
+    echo ""
+    for branch in $(echo "${!to_delete[@]}" | tr ' ' '\n' | sort); do
+        reason="${to_delete[$branch]}"
+        printf "  %-45s %s\n" "$branch" "($reason)"
+    done
+fi

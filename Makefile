@@ -1,7 +1,7 @@
 .PHONY: setup symlinks zshrc tmux claude gitconfig p10k dircolors \
        zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
        zsh-syntax-highlighting zsh-history-substring-search fzf \
-       terminal-bling neovim nvimrc packages apt docker help bat-themes
+       terminal-bling neovim nvimrc packages apt docker help bat-themes bin
 
 ############################################################
 # Default target: show available targets
@@ -27,7 +27,7 @@ setup: symlinks zsh-addons terminal-bling
 ############################################################
 # Symlink config files into place
 ############################################################
-symlinks: zshrc tmux claude gitconfig p10k dircolors delta bat-themes
+symlinks: zshrc tmux claude gitconfig p10k dircolors delta bat-themes bin
 
 zshrc:
 	ln -sf $(CURDIR)/.zshrc ${HOME}/.zshrc
@@ -63,6 +63,13 @@ bat-themes:
 	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Macchiato.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Macchiato.tmTheme"
 	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Frappe.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Frappe.tmTheme"
 	$(shell command -v bat || command -v batcat) cache --build
+
+bin:
+	mkdir -p ${HOME}/.local/bin
+	@for f in $(CURDIR)/bin/*; do \
+		ln -sf $$f ${HOME}/.local/bin/$$(basename $$f); \
+		echo "Linked bin: $$(basename $$f)"; \
+	done
 
 nvimrc:
 	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
