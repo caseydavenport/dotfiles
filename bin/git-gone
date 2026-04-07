@@ -7,8 +7,8 @@
 #   2. PR-merged — branches with a merged GitHub PR (catches untracked branches).
 #
 # Usage:
-#   git gone          # dry-run (list what would be deleted)
-#   git gone -f       # actually delete
+#   git gone          # list and prompt to delete
+#   git gone -f       # delete without prompting
 #   git gone --force  # same as -f
 
 set -eo pipefail
@@ -39,40 +39,135 @@ done < <(git branch -vv | grep ': gone]')
 if command -v gh &>/dev/null && gh repo view --json nameWithOwner &>/dev/null 2>&1; then
     repo=$(gh repo view --json nameWithOwner -q '.nameWithOwner')
 
+    # Collect candidate branches (not already caught by pass 1, not current/default).
+    candidates=()
     while IFS= read -r branch; do
         [[ -z "$branch" ]] && continue
         [[ "$branch" == "$current_branch" ]] && continue
         [[ "$branch" == "$default_branch" ]] && continue
-        [[ -v "to_delete[$branch]" ]] && continue  # already caught by pass 1
+        [[ -v "to_delete[$branch]" ]] && continue
+        candidates+=("$branch")
+    done < <(git for-each-ref --format='%(refname:short)' refs/heads/)
 
-        # Check all remotes for a merged PR matching this branch name.
-        # gh pr list searches by head ref name across forks.
-        merged=$(gh pr list \
-            --repo "$repo" \
-            --head "$branch" \
-            --state merged \
-            --json number,headRefName \
-            --jq '.[0].number // empty' 2>/dev/null || true)
+    if [[ ${#candidates[@]} -gt 0 ]]; then
+        # Build search prefixes: each branch checked with and without fork owner prefixes.
+        search_branches=()
+        fork_owners=()
+        for remote in $(git remote); do
+            owner=$(git remote get-url "$remote" 2>/dev/null | sed -n 's|.*github.com[:/]\([^/]*\)/.*|\1|p')
+            [[ -n "$owner" ]] && fork_owners+=("$owner")
+        done
 
-        if [[ -z "$merged" ]]; then
-            # Also try with the fork prefix (e.g., caseydavenport:branch).
-            for remote in $(git remote); do
-                fork_owner=$(git remote get-url "$remote" 2>/dev/null | sed -n 's|.*github.com[:/]\([^/]*\)/.*|\1|p')
-                [[ -z "$fork_owner" ]] && continue
-                merged=$(gh pr list \
-                    --repo "$repo" \
-                    --head "${fork_owner}:${branch}" \
-                    --state merged \
-                    --json number,headRefName \
-                    --jq '.[0].number // empty' 2>/dev/null || true)
-                [[ -n "$merged" ]] && break
+        for branch in "${candidates[@]}"; do
+            search_branches+=("$branch")
+        done
+
+        # Batch GraphQL search in chunks to stay under query length limits.
+        # Maps branch name -> PR number for merged PRs.
+        declare -A merged_prs
+
+        _search_merged_prs() {
+            local query_terms=("$@")
+            [[ ${#query_terms[@]} -eq 0 ]] && return
+
+            local search_q="repo:${repo} is:pr is:merged"
+            for term in "${query_terms[@]}"; do
+                search_q+=" head:${term}"
+            done
+
+            local graphql_query
+            graphql_query=$(cat <<GRAPHQL
+query {
+  search(query: "${search_q}", type: ISSUE, first: 100) {
+    nodes {
+      ... on PullRequest {
+        number
+        headRefName
+      }
+    }
+  }
+}
+GRAPHQL
+)
+            local result
+            result=$(gh api graphql -f query="$graphql_query" 2>/dev/null) || return 0
+
+            # Parse results: extract number and headRefName pairs.
+            while IFS= read -r line; do
+                local pr_num head_ref
+                pr_num=$(echo "$line" | sed -n 's/.*"number":\([0-9]*\).*/\1/p')
+                head_ref=$(echo "$line" | sed -n 's/.*"headRefName":"\([^"]*\)".*/\1/p')
+                if [[ -n "$pr_num" && -n "$head_ref" ]]; then
+                    merged_prs["$head_ref"]="$pr_num"
+                fi
+            done < <(echo "$result" | tr '{}' '\n' | grep '"number"')
+        }
+
+        # Chunk branches into batches. Each "head:branch" term is ~10-50 chars;
+        # keep total search query under ~200 chars of head terms to be safe.
+        chunk=()
+        chunk_len=0
+        max_chunk_len=180
+
+        for branch in "${search_branches[@]}"; do
+            term_len=$(( ${#branch} + 6 ))  # "head:" + branch + space
+            if (( chunk_len + term_len > max_chunk_len && ${#chunk[@]} > 0 )); then
+                _search_merged_prs "${chunk[@]}"
+                chunk=()
+                chunk_len=0
+            fi
+            chunk+=("$branch")
+            chunk_len=$(( chunk_len + term_len ))
+        done
+        [[ ${#chunk[@]} -gt 0 ]] && _search_merged_prs "${chunk[@]}"
+
+        # If direct branch name didn't match, try with fork owner prefixes.
+        # Only retry branches that weren't found in the first pass.
+        remaining=()
+        for branch in "${search_branches[@]}"; do
+            [[ -v "merged_prs[$branch]" ]] || remaining+=("$branch")
+        done
+
+        if [[ ${#remaining[@]} -gt 0 && ${#fork_owners[@]} -gt 0 ]]; then
+            for owner in "${fork_owners[@]}"; do
+                prefixed=()
+                for branch in "${remaining[@]}"; do
+                    prefixed+=("${owner}:${branch}")
+                done
+
+                chunk=()
+                chunk_len=0
+                for term in "${prefixed[@]}"; do
+                    term_len=$(( ${#term} + 6 ))
+                    if (( chunk_len + term_len > max_chunk_len && ${#chunk[@]} > 0 )); then
+                        _search_merged_prs "${chunk[@]}"
+                        chunk=()
+                        chunk_len=0
+                    fi
+                    chunk+=("$term")
+                    chunk_len=$(( chunk_len + term_len ))
+                done
+                [[ ${#chunk[@]} -gt 0 ]] && _search_merged_prs "${chunk[@]}"
+            done
+
+            # Map prefixed results back to local branch names.
+            for branch in "${remaining[@]}"; do
+                for owner in "${fork_owners[@]}"; do
+                    if [[ -v "merged_prs[${owner}:${branch}]" ]]; then
+                        merged_prs["$branch"]="${merged_prs[${owner}:${branch}]}"
+                        break
+                    fi
+                done
             done
         fi
 
-        if [[ -n "$merged" ]]; then
-            to_delete["$branch"]="https://github.com/${repo}/pull/${merged} merged"
-        fi
-    done < <(git for-each-ref --format='%(refname:short)' refs/heads/)
+        # Mark branches with merged PRs for deletion.
+        for branch in "${candidates[@]}"; do
+            if [[ -v "merged_prs[$branch]" ]]; then
+                to_delete["$branch"]="https://github.com/${repo}/pull/${merged_prs[$branch]} merged"
+            fi
+        done
+    fi
 fi
 
 # --- Output / Delete ---
@@ -81,17 +176,28 @@ if [[ ${#to_delete[@]} -eq 0 ]]; then
     exit 0
 fi
 
-if [[ "$force" == true ]]; then
+_delete_branches() {
     for branch in $(echo "${!to_delete[@]}" | tr ' ' '\n' | sort); do
         reason="${to_delete[$branch]}"
         git branch -D "$branch"
         echo "  ($reason)"
     done
+}
+
+if [[ "$force" == true ]]; then
+    _delete_branches
 else
-    echo "Branches to delete (run 'git gone -f' to delete):"
+    echo "Branches to delete:"
     echo ""
     for branch in $(echo "${!to_delete[@]}" | tr ' ' '\n' | sort); do
         reason="${to_delete[$branch]}"
         printf "  %-45s %s\n" "$branch" "($reason)"
     done
+    echo ""
+    read -rp "Delete these branches? [y/N] " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        _delete_branches
+    else
+        echo "Aborted."
+    fi
 fi
