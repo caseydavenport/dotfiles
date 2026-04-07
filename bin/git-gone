@@ -24,10 +24,14 @@ default_branch=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null |
 declare -A to_delete  # branch -> reason
 
 # --- Pass 1: Classic gone (tracking ref was pruned) ---
-git fetch --all --prune --quiet 2>/dev/null
+# Fetch each remote individually so one unreachable remote doesn't abort the script.
+for _remote in $(git remote); do
+    git fetch "$_remote" --prune --quiet 2>/dev/null || true
+done
 
 while IFS= read -r line; do
-    branch=$(echo "$line" | awk '{print $1}')
+    # Strip leading markers: "* " (current), "+ " (worktree), "  " (normal).
+    branch=$(echo "$line" | sed 's/^[* +]*//' | awk '{print $1}')
     [[ -z "$branch" ]] && continue
     [[ "$branch" == "$current_branch" ]] && continue
     [[ "$branch" == "$default_branch" ]] && continue
@@ -50,81 +54,60 @@ if command -v gh &>/dev/null && gh repo view --json nameWithOwner &>/dev/null 2>
     done < <(git for-each-ref --format='%(refname:short)' refs/heads/)
 
     if [[ ${#candidates[@]} -gt 0 ]]; then
-        # Build search prefixes: each branch checked with and without fork owner prefixes.
-        search_branches=()
         fork_owners=()
         for remote in $(git remote); do
             owner=$(git remote get-url "$remote" 2>/dev/null | sed -n 's|.*github.com[:/]\([^/]*\)/.*|\1|p')
             [[ -n "$owner" ]] && fork_owners+=("$owner")
         done
 
-        for branch in "${candidates[@]}"; do
-            search_branches+=("$branch")
-        done
+        declare -A merged_prs  # branch -> PR number
 
-        # Batch GraphQL search in chunks to stay under query length limits.
-        # Maps branch name -> PR number for merged PRs.
-        declare -A merged_prs
+        # Use GraphQL aliases to check multiple branches in one HTTP request.
+        # Each alias runs an independent search, avoiding the GitHub search
+        # limitation where multiple head: qualifiers are ANDed together.
+        _batch_search() {
+            local -a head_refs=("$@")
+            [[ ${#head_refs[@]} -eq 0 ]] && return
 
-        _search_merged_prs() {
-            local query_terms=("$@")
-            [[ ${#query_terms[@]} -eq 0 ]] && return
-
-            local search_q="repo:${repo} is:pr is:merged"
-            for term in "${query_terms[@]}"; do
-                search_q+=" head:${term}"
+            local query="query {"
+            local i=0
+            for ref in "${head_refs[@]}"; do
+                # Sanitize branch name for use in GraphQL string (escape quotes).
+                local safe_ref="${ref//\"/\\\"}"
+                query+="
+  b${i}: search(query: \"repo:${repo} is:pr is:merged head:${safe_ref}\", type: ISSUE, first: 1) {
+    nodes { ... on PullRequest { number headRefName } }
+  }"
+                i=$(( i + 1 ))
             done
+            query+=$'\n}'
 
-            local graphql_query
-            graphql_query=$(cat <<GRAPHQL
-query {
-  search(query: "${search_q}", type: ISSUE, first: 100) {
-    nodes {
-      ... on PullRequest {
-        number
-        headRefName
-      }
-    }
-  }
-}
-GRAPHQL
-)
             local result
-            result=$(gh api graphql -f query="$graphql_query" 2>/dev/null) || return 0
+            result=$(gh api graphql -f query="$query" 2>/dev/null) || return 0
 
-            # Parse results: extract number and headRefName pairs.
-            while IFS= read -r line; do
-                local pr_num head_ref
-                pr_num=$(echo "$line" | sed -n 's/.*"number":\([0-9]*\).*/\1/p')
-                head_ref=$(echo "$line" | sed -n 's/.*"headRefName":"\([^"]*\)".*/\1/p')
-                if [[ -n "$pr_num" && -n "$head_ref" ]]; then
-                    merged_prs["$head_ref"]="$pr_num"
-                fi
-            done < <(echo "$result" | tr '{}' '\n' | grep '"number"')
+            # Extract number/headRefName pairs from all aliases.
+            while IFS=$'\t' read -r pr_num head_ref; do
+                [[ -n "$pr_num" && -n "$head_ref" ]] && merged_prs["$head_ref"]="$pr_num"
+            done < <(echo "$result" | jq -r '
+                .data | to_entries[].value.nodes[]? |
+                "\(.number)\t\(.headRefName)"
+            ' 2>/dev/null)
         }
 
-        # Chunk branches into batches. Each "head:branch" term is ~10-50 chars;
-        # keep total search query under ~200 chars of head terms to be safe.
+        # Batch in chunks of 15 to stay within GraphQL complexity limits.
         chunk=()
-        chunk_len=0
-        max_chunk_len=180
-
-        for branch in "${search_branches[@]}"; do
-            term_len=$(( ${#branch} + 6 ))  # "head:" + branch + space
-            if (( chunk_len + term_len > max_chunk_len && ${#chunk[@]} > 0 )); then
-                _search_merged_prs "${chunk[@]}"
-                chunk=()
-                chunk_len=0
-            fi
+        for branch in "${candidates[@]}"; do
             chunk+=("$branch")
-            chunk_len=$(( chunk_len + term_len ))
+            if [[ ${#chunk[@]} -ge 15 ]]; then
+                _batch_search "${chunk[@]}"
+                chunk=()
+            fi
         done
-        [[ ${#chunk[@]} -gt 0 ]] && _search_merged_prs "${chunk[@]}"
+        [[ ${#chunk[@]} -gt 0 ]] && _batch_search "${chunk[@]}"
 
-        # If direct branch name didn't match, try with fork owner prefixes.
-        # Only retry branches that weren't found in the first pass.
+        # Retry unmatched branches with fork owner prefixes (e.g., caseydavenport:branch).
         remaining=()
-        for branch in "${search_branches[@]}"; do
+        for branch in "${candidates[@]}"; do
             [[ -v "merged_prs[$branch]" ]] || remaining+=("$branch")
         done
 
@@ -136,18 +119,14 @@ GRAPHQL
                 done
 
                 chunk=()
-                chunk_len=0
                 for term in "${prefixed[@]}"; do
-                    term_len=$(( ${#term} + 6 ))
-                    if (( chunk_len + term_len > max_chunk_len && ${#chunk[@]} > 0 )); then
-                        _search_merged_prs "${chunk[@]}"
-                        chunk=()
-                        chunk_len=0
-                    fi
                     chunk+=("$term")
-                    chunk_len=$(( chunk_len + term_len ))
+                    if [[ ${#chunk[@]} -ge 15 ]]; then
+                        _batch_search "${chunk[@]}"
+                        chunk=()
+                    fi
                 done
-                [[ ${#chunk[@]} -gt 0 ]] && _search_merged_prs "${chunk[@]}"
+                [[ ${#chunk[@]} -gt 0 ]] && _batch_search "${chunk[@]}"
             done
 
             # Map prefixed results back to local branch names.

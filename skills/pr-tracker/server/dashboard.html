@@ -1111,7 +1111,8 @@ function renderCard(pr) {
   if (pr.blocks?.length) meta.push(`blocks: ${pr.blocks.join(", ")}`);
   if (pr.notes) meta.push(pr.notes);
 
-  const cherryPickTag = pr.cherry_pick_of ? `<span class="cherry-pick-tag">CHERRY-PICK</span>` : "";
+  const isCherryPick = !!(pr.cherry_pick_of || /^\[v\d+\.\d+\]/.test(pr.title));
+  const cherryPickTag = isCherryPick ? `<span class="cherry-pick-tag">CHERRY-PICK</span>` : "";
   const avatarHtml = pr.author && pr.author !== "caseydavenport"
     ? `<img class="card-avatar" src="https://github.com/${pr.author}.png?size=36" alt="${pr.author}" title="${pr.author}">`
     : "";
@@ -1120,10 +1121,11 @@ function renderCard(pr) {
   const age = ageHtml(pr.created_at);
   const ciHistory = ciHistoryHtml(pr.ci_history);
   const isUntriaged = !pr.triaged && !isChanged;
-  const isReadyToMerge = currentState === "mergeable" && pr.ci === "pass";
+  const isReadyToMerge = (currentState === "mergeable" && pr.ci === "pass") || isCherryPick;
   const newTag = isUntriaged ? `<span class="new-tag" onclick="event.stopPropagation(); triageCard('${key}')" style="cursor:pointer" title="Click to dismiss">NEW</span>` : "";
 
-  return `<div class="card state-${currentState} ${isChanged ? "changed" : ""} ${isUntriaged ? "untriaged" : ""} ${isReadyToMerge ? "ready-to-merge" : ""}" draggable="true"
+  const visualState = isCherryPick ? "mergeable" : currentState;
+  return `<div class="card state-${visualState} ${isChanged ? "changed" : ""} ${isUntriaged ? "untriaged" : ""} ${isReadyToMerge ? "ready-to-merge" : ""}" draggable="true"
     data-prkey="${key}"
     ondragstart="handleDragStart(event)"
     ondragend="handleDragEnd(event)">
