@@ -1,8 +1,37 @@
 package main
 
+// Group defines a user-configurable kanban column for PR prioritization.
+type Group struct {
+	Name      string `yaml:"name" json:"name"`
+	Color     string `yaml:"color" json:"color"`
+	Collapsed bool   `yaml:"collapsed" json:"collapsed"`
+}
+
+// GroupUpdate represents a collapse/expand state change for a group.
+type GroupUpdate struct {
+	Name      string `json:"name"`
+	Collapsed *bool  `json:"collapsed,omitempty"`
+}
+
+// GroupAdd represents a request to create a new group.
+type GroupAdd struct {
+	Name     string `json:"name"`
+	Color    string `json:"color"`
+	Position int    `json:"position"`
+}
+
+// GroupChanges represents mutations to the group configuration.
+type GroupChanges struct {
+	Add     *GroupAdd     `json:"add,omitempty"`
+	Remove  string        `json:"remove,omitempty"`
+	Reorder []string      `json:"reorder,omitempty"`
+	Updates []GroupUpdate `json:"updates,omitempty"`
+}
+
 // TrackerData is the top-level structure stored in pr_tracker.yaml.
 type TrackerData struct {
 	LastRefreshed  string          `yaml:"last_refreshed" json:"last_refreshed"`
+	Groups         []Group         `yaml:"groups" json:"groups"`
 	Repos          []Repo          `yaml:"repos" json:"repos"`
 	ReviewRequests []ReviewRequest `yaml:"review_requests" json:"review_requests"`
 	AssignedIssues []AssignedIssue `yaml:"assigned_issues" json:"assigned_issues"`
@@ -89,6 +118,7 @@ type PRChange struct {
 
 // PatchRequest is the request body for PATCH /api/prs.
 type PatchRequest struct {
-	Changes     []PRChange   `json:"changes"`
-	ItemChanges []ItemChange `json:"item_changes,omitempty"`
+	Changes      []PRChange    `json:"changes"`
+	ItemChanges  []ItemChange  `json:"item_changes,omitempty"`
+	GroupChanges *GroupChanges `json:"group_changes,omitempty"`
 }

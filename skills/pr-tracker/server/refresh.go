@@ -64,6 +64,8 @@ func refreshFromGitHub(existing *TrackerData) (*TrackerData, []error) {
 	}
 	wg.Wait()
 
+	result.Groups = existing.Groups
+
 	// Build a set of Casey's calico OSS PR numbers so we can filter
 	// cherry-picks to only those originating from Casey's PRs.
 	caseyOSSPRs := map[string]bool{}
@@ -136,7 +138,7 @@ func refreshFromGitHub(existing *TrackerData) (*TrackerData, []error) {
 					}
 					pr.CIHistory = history
 				} else {
-					pr.Priority = "parked"
+					pr.Priority = "uncategorized"
 					if ci != "pending" {
 						pr.CIHistory = []string{ci}
 					}
@@ -266,7 +268,7 @@ func fetchRepoPRs(repo string, existing map[string]*PR) ([]PR, error) {
 			}
 			pr.CIHistory = history
 		} else {
-			pr.Priority = "parked"
+			pr.Priority = "uncategorized"
 			if ci != "pending" {
 				pr.CIHistory = []string{ci}
 			}

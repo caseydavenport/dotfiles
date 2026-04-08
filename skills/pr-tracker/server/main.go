@@ -13,13 +13,17 @@ import (
 )
 
 var (
-	yamlPath = flag.String("data", defaultYAMLPath(), "path to pr_tracker.yaml")
-	port     = flag.Int("port", 48923, "HTTP server port")
-	noBrowse = flag.Bool("no-browse", false, "don't open browser on start")
+	yamlPath  = flag.String("data", defaultYAMLPath(), "path to pr_tracker.yaml")
+	port      = flag.Int("port", 48923, "HTTP server port")
+	noBrowse  = flag.Bool("no-browse", false, "don't open browser on start")
+	gcsBucket = flag.String("gcs-bucket", "", "GCS bucket for syncing tracker data (empty disables sync)")
 )
 
 // fileMu serializes reads and writes to the YAML file.
 var fileMu sync.Mutex
+
+// gcsErr tracks GCS sync failures. When non-empty, mutations are blocked.
+var gcsErr string
 
 func defaultYAMLPath() string {
 	home, err := os.UserHomeDir()
@@ -31,6 +35,13 @@ func defaultYAMLPath() string {
 
 func main() {
 	flag.Parse()
+
+	if *gcsBucket != "" {
+		if err := gcsDownload(*gcsBucket, *yamlPath); err != nil {
+			log.Printf("gcs: download failed: %v", err)
+			gcsErr = err.Error()
+		}
+	}
 
 	if _, err := os.Stat(*yamlPath); os.IsNotExist(err) {
 		log.Fatalf("data file not found: %s", *yamlPath)
@@ -53,6 +64,13 @@ func main() {
 			return
 		}
 		handleRefresh(w, r)
+	})
+	mux.HandleFunc("/api/gcs-retry", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		handleGCSRetry(w, r)
 	})
 	mux.HandleFunc("/", handleDashboard)
 

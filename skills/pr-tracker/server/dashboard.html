@@ -122,7 +122,6 @@
 
   .board {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     margin-bottom: 24px;
     min-height: 200px;
@@ -168,6 +167,95 @@
     gap: 6px;
     overflow-y: auto;
     min-height: 60px;
+  }
+  .column-collapsed {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .column-collapsed:hover {
+    border-color: var(--text-muted);
+    background: var(--surface-hover);
+  }
+  .column-collapsed.drag-over {
+    border-color: var(--link);
+    background: #161b2280;
+  }
+  .column-collapsed-inner {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-size: 13px;
+    font-weight: 600;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .column-collapsed-count {
+    font-weight: normal;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 1px 5px;
+    border-radius: 8px;
+    writing-mode: horizontal-tb;
+    transform: rotate(180deg);
+  }
+  .col-collapse {
+    cursor: pointer;
+    opacity: 0.5;
+    margin-right: 4px;
+    font-size: 14px;
+  }
+  .col-collapse:hover { opacity: 1; }
+  .col-delete {
+    cursor: pointer;
+    opacity: 0.4;
+    font-size: 16px;
+    margin-right: 6px;
+    font-weight: bold;
+  }
+  .col-delete:hover { opacity: 1; color: #f85149; }
+  .column-header[draggable="true"] { cursor: grab; }
+  .column-header.dragging-col { opacity: 0.4; cursor: grabbing; }
+  .column.col-drag-target-left { box-shadow: -3px 0 0 0 var(--link); }
+  .column.col-drag-target-right { box-shadow: 3px 0 0 0 var(--link); }
+  .add-group-col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    min-width: 40px;
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 24px;
+    transition: border-color 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .add-group-col:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+  }
+  .add-group-input {
+    background: var(--bg);
+    border: 1px solid var(--link);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 13px;
+    padding: 4px 8px;
+    outline: none;
+    width: 120px;
   }
 
   .card {
@@ -593,12 +681,43 @@
     color: var(--text-muted);
   }
   .loading-overlay.hidden { display: none; }
+
+  .gcs-banner {
+    display: none;
+    background: #cf222e;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+  }
+  .gcs-banner.visible { display: flex; }
+  .gcs-banner button {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 6px;
+    color: #fff;
+    padding: 4px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .gcs-banner button:hover { background: rgba(255,255,255,0.3); }
+  .gcs-banner button:disabled { opacity: 0.6; cursor: wait; }
+  .gcs-banner .gcs-msg { flex: 1; }
 </style>
 </head>
 <body>
 
 <div class="loading-overlay" id="loading-overlay">Loading PR data...</div>
 <div class="toast-container" id="toast-container"></div>
+<div class="gcs-banner" id="gcs-banner">
+  <span class="gcs-msg" id="gcs-msg"></span>
+  <button id="gcs-retry-btn" onclick="retryGCS()">Retry</button>
+</div>
 
 <div class="header">
   <h1>PR Dashboard</h1>
@@ -662,19 +781,18 @@ const SHORT_REPO = {
   "tigera/operator": "operator",
   "tigera/calico-private": "calico-private",
 };
-const PRIORITY_ORDER = ["active", "next-up", "backburner", "parked"];
-const PRIORITY_LABELS = {
-  "active": "Active",
-  "next-up": "Next Up",
-  "backburner": "Backburner",
-  "parked": "Parked",
-};
-const PRIORITY_COLORS = {
-  "active": "#cf222e",
-  "next-up": "#bf8700",
-  "backburner": "#768390",
-  "parked": "#484f58",
-};
+// Groups are loaded dynamically from the API. These are populated by loadData().
+let GROUPS = [];
+
+function groupOrder() { return GROUPS.map(g => g.name); }
+function groupColor(name) { return (GROUPS.find(g => g.name === name) || {}).color || "#768390"; }
+function groupLabel(name) { return name.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "); }
+function isGroupCollapsed(name) { return (GROUPS.find(g => g.name === name) || {}).collapsed || false; }
+const GROUP_PALETTE = ["#8b5cf6", "#0d9488", "#ea580c", "#ec4899", "#6366f1", "#84cc16"];
+function nextGroupColor() {
+  const used = new Set(GROUPS.map(g => g.color));
+  return GROUP_PALETTE.find(c => !used.has(c)) || GROUP_PALETTE[0];
+}
 const STATE_COLORS = {
   "needs-review": "#bf8700",
   "reviewed": "#cf222e",
@@ -701,6 +819,34 @@ const CI_ICONS = {
   "pending": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM2 8a6 6 0 1 1 12 0A6 6 0 0 1 2 8zm4.5-1.5a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3z"/></svg>`,
   "unknown": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm9-3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-.25 3a.75.75 0 0 0-1.5 0v3a.75.75 0 0 0 1.5 0V8z"/></svg>`,
 };
+
+let gcsReadOnly = false;
+
+async function retryGCS() {
+  const btn = document.getElementById("gcs-retry-btn");
+  btn.disabled = true;
+  btn.textContent = "Retrying...";
+  try {
+    const resp = await fetch("/api/gcs-retry", {method: "POST"});
+    if (resp.ok) {
+      gcsReadOnly = false;
+      document.getElementById("gcs-banner").classList.remove("visible");
+      await loadData();
+      showToast("GCS sync restored", "success");
+    } else {
+      const err = await resp.json();
+      document.getElementById("gcs-msg").textContent =
+        "GCS sync unavailable: " + (err.error || "unknown error") + ". Changes are disabled until sync is restored.";
+      showToast("Retry failed", "error");
+    }
+  } catch (e) {
+    showToast("Retry failed: " + e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Retry";
+  }
+}
+
 const REVIEW_ICONS = {
   "approved": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg>`,
   "changes": `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm11.28-2.28a.75.75 0 0 0-1.06-1.06L7.25 7.63 5.78 6.16a.75.75 0 0 0-1.06 1.06l2 2a.75.75 0 0 0 1.06 0l3.5-3.5z"/></svg>`,
@@ -726,6 +872,7 @@ function showToast(message, type = "info", duration = 3000) {
 
 // --- Triage (dismiss NEW) ---
 async function triageCard(key) {
+  if (gcsReadOnly) return;
   const pr = ALL_PRS.find(p => prKey(p) === key);
   if (!pr) return;
   pr.triaged = true;
@@ -850,7 +997,7 @@ function flattenPRs(data) {
         short_repo: shortRepo(repo.name),
         url: `${REPO_URLS[repo.name] || ""}/${pr.number}`,
         state: pr.state || "",
-        priority: pr.priority || "backburner",
+        priority: pr.priority || "uncategorized",
         ci: pr.ci || "unknown",
         ci_history: pr.ci_history || [],
         created_at: pr.created_at || "",
@@ -894,6 +1041,19 @@ async function loadData() {
     return;
   }
   const data = await resp.json();
+
+  if (data.gcs_error) {
+    gcsReadOnly = true;
+    document.getElementById("gcs-msg").textContent =
+      "GCS sync unavailable: " + data.gcs_error + ". Changes are disabled until sync is restored.";
+    document.getElementById("gcs-banner").classList.add("visible");
+  } else {
+    gcsReadOnly = false;
+    document.getElementById("gcs-banner").classList.remove("visible");
+  }
+  document.getElementById("refresh-btn").disabled = gcsReadOnly;
+
+  GROUPS = data.groups || [];
 
   ALL_PRS = flattenPRs(data);
   REVIEW_REQUESTS = (data.review_requests || []).map(rr => ({
@@ -945,6 +1105,7 @@ function updateApplyBar() {
 }
 
 async function applyChanges() {
+  if (gcsReadOnly) return;
   const btn = document.getElementById("apply-btn");
   btn.disabled = true;
   btn.textContent = "Applying...";
@@ -991,6 +1152,7 @@ function discardChanges() {
 
 async function refreshFromGitHub() {
   const btn = document.getElementById("refresh-btn");
+  if (gcsReadOnly) return;
   btn.classList.add("spinning");
   btn.disabled = true;
   try {
@@ -1039,30 +1201,100 @@ function handleDragEnd(e) {
   draggedPrKey = null;
 }
 
+let draggedColumnName = null;
+
+function handleColumnDragStart(e) {
+  const header = e.target.closest(".column-header");
+  const col = header?.closest(".column");
+  if (!col) return;
+  draggedColumnName = col.dataset.priority;
+  header.classList.add("dragging-col");
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("text/x-column", draggedColumnName);
+  // Prevent card drag from firing.
+  e.stopPropagation();
+}
+
+function handleColumnDragEnd(e) {
+  const header = e.target.closest(".column-header");
+  if (header) header.classList.remove("dragging-col");
+  document.querySelectorAll(".col-drag-target-left, .col-drag-target-right").forEach(el => {
+    el.classList.remove("col-drag-target-left", "col-drag-target-right");
+  });
+  draggedColumnName = null;
+}
+
 function handleDragOver(e) {
   e.preventDefault();
-  e.dataTransfer.dropEffect = "move";
-  const col = e.target.closest(".column");
-  if (col) col.classList.add("drag-over");
+  const col = e.target.closest(".column") || e.target.closest(".column-collapsed");
+  if (!col) return;
+  if (draggedColumnName) {
+    // Column reorder: show left/right indicator based on mouse position.
+    e.dataTransfer.dropEffect = "move";
+    const rect = col.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    col.classList.toggle("col-drag-target-left", e.clientX < midX);
+    col.classList.toggle("col-drag-target-right", e.clientX >= midX);
+    col.classList.remove("drag-over");
+  } else {
+    // Card drag.
+    e.dataTransfer.dropEffect = "move";
+    col.classList.add("drag-over");
+  }
 }
 
 function handleDragLeave(e) {
-  const col = e.target.closest(".column");
+  const col = e.target.closest(".column") || e.target.closest(".column-collapsed");
   if (col && !col.contains(e.relatedTarget)) {
-    col.classList.remove("drag-over");
+    col.classList.remove("drag-over", "col-drag-target-left", "col-drag-target-right");
   }
 }
 
 function handleDrop(e) {
   e.preventDefault();
-  const col = e.target.closest(".column");
+  const col = e.target.closest(".column") || e.target.closest(".column-collapsed");
   if (!col) return;
-  col.classList.remove("drag-over");
+  col.classList.remove("drag-over", "col-drag-target-left", "col-drag-target-right");
+  if (gcsReadOnly && !draggedColumnName) return;
+
+  if (draggedColumnName) {
+    // Column reorder.
+    const targetName = col.dataset.priority;
+    if (!targetName || targetName === draggedColumnName) return;
+    const order = groupOrder();
+    const fromIdx = order.indexOf(draggedColumnName);
+    let toIdx = order.indexOf(targetName);
+    if (fromIdx < 0 || toIdx < 0) return;
+
+    // Determine if dropping before or after target.
+    const rect = col.getBoundingClientRect();
+    if (e.clientX >= rect.left + rect.width / 2) toIdx++;
+    if (fromIdx < toIdx) toIdx--;
+
+    order.splice(fromIdx, 1);
+    order.splice(toIdx, 0, draggedColumnName);
+    reorderGroups(order);
+    return;
+  }
+
+  // Card drag.
   const newPriority = col.dataset.priority;
   const key = e.dataTransfer.getData("text/plain");
   if (!key || !newPriority) return;
   const pr = ALL_PRS.find(p => prKey(p) === key);
   if (!pr) return;
+
+  // If dropping on a collapsed column, expand it.
+  if (col.classList.contains("column-collapsed")) {
+    const group = GROUPS.find(g => g.name === newPriority);
+    if (group) group.collapsed = false;
+    fetch("/api/prs", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({changes: [], group_changes: {updates: [{name: newPriority, collapsed: false}]}}),
+    }).catch(() => {});
+  }
+
   currentPriority[key] = newPriority;
   markChanged(pr, "priority", newPriority);
   renderMyPrs();
@@ -1070,6 +1302,7 @@ function handleDrop(e) {
 
 // --- State change handler ---
 function handleStateChange(el) {
+  if (gcsReadOnly) return;
   const key = el.dataset.prkey;
   const pr = ALL_PRS.find(p => prKey(p) === key);
   if (!pr) return;
@@ -1193,6 +1426,119 @@ function renderFilters() {
     `<div class="filter-group"><span class="filter-label">CI</span>${ciButtons}</div>`;
 }
 
+function renderCollapsedColumn(name, color, label, count) {
+  return `<div class="column-collapsed" style="border-top: 3px solid ${color}"
+    data-priority="${name}"
+    onclick="toggleCollapse('${name}')"
+    ondragover="handleDragOver(event)"
+    ondragleave="handleDragLeave(event)"
+    ondrop="handleDrop(event)">
+    <div class="column-collapsed-inner" style="color:${color}">
+      ${label}
+      <span class="column-collapsed-count">${count}</span>
+    </div>
+  </div>`;
+}
+
+function renderAddGroupButton() {
+  return `<div class="add-group-col" onclick="showAddGroupInput(this)" title="Add group">+</div>`;
+}
+
+function showAddGroupInput(el) {
+  if (gcsReadOnly) return;
+  el.innerHTML = `<input class="add-group-input" placeholder="Group name..." autofocus
+    onkeydown="if(event.key==='Enter')addGroup(this.value); if(event.key==='Escape')renderMyPrs();"
+    onblur="setTimeout(() => renderMyPrs(), 150)">`;
+  el.querySelector("input").focus();
+}
+
+async function addGroup(name) {
+  name = name.trim().toLowerCase().replace(/\s+/g, "-");
+  if (!name) return;
+  const color = nextGroupColor();
+  // Insert before uncategorized if it's last, otherwise append.
+  const uncatIdx = GROUPS.findIndex(g => g.name === "uncategorized");
+  const position = (uncatIdx >= 0 && uncatIdx === GROUPS.length - 1) ? uncatIdx : GROUPS.length;
+  try {
+    const resp = await fetch("/api/prs", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({changes: [], group_changes: {add: {name, color, position}}}),
+    });
+    if (resp.ok) {
+      await loadData();
+      showToast(`Added group "${name}"`, "success");
+    } else {
+      const err = await resp.json();
+      showToast("Failed: " + (err.error || resp.status), "error");
+    }
+  } catch (e) {
+    showToast("Failed to add group: " + e.message, "error");
+  }
+}
+
+async function deleteGroup(name) {
+  if (gcsReadOnly) return;
+  try {
+    const resp = await fetch("/api/prs", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({changes: [], group_changes: {remove: name}}),
+    });
+    if (resp.ok) {
+      await loadData();
+      showToast(`Removed group "${name}"`, "success");
+    } else {
+      const err = await resp.json();
+      showToast("Failed: " + (err.error || resp.status), "error");
+    }
+  } catch (e) {
+    showToast("Failed to delete group: " + e.message, "error");
+  }
+}
+
+async function toggleCollapse(name) {
+  if (gcsReadOnly) return;
+  const group = GROUPS.find(g => g.name === name);
+  if (!group) return;
+  group.collapsed = !group.collapsed;
+  renderMyPrs();
+  // Persist immediately (not through apply bar).
+  try {
+    await fetch("/api/prs", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({changes: [], group_changes: {updates: [{name, collapsed: group.collapsed}]}}),
+    });
+  } catch (e) {
+    showToast("Failed to save collapse state: " + e.message, "error");
+  }
+}
+
+async function reorderGroups(order) {
+  if (gcsReadOnly) return;
+  // Reorder local state immediately for snappy UI.
+  const byName = {};
+  GROUPS.forEach(g => byName[g.name] = g);
+  GROUPS = order.map(n => byName[n]).filter(Boolean);
+  renderMyPrs();
+  try {
+    const resp = await fetch("/api/prs", {
+      method: "PATCH",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({changes: [], group_changes: {reorder: order}}),
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      showToast("Reorder failed: " + (err.error || resp.status), "error");
+      await loadData();
+    }
+  } catch (e) {
+    showToast("Reorder failed: " + e.message, "error");
+    await loadData();
+  }
+}
+
 function renderMyPrs() {
   const board = document.getElementById("board");
   let regular = ALL_PRS;
@@ -1210,35 +1556,58 @@ function renderMyPrs() {
 
   renderFilters();
 
+  const order = groupOrder();
   const grouped = {};
-  PRIORITY_ORDER.forEach(p => grouped[p] = []);
+  order.forEach(p => grouped[p] = []);
   regular.forEach(pr => {
     const p = currentPriority[prKey(pr)] || pr.priority;
     if (grouped[p]) grouped[p].push(pr);
-    else grouped["backburner"].push(pr);
+    else grouped["uncategorized"].push(pr);
   });
 
-  board.innerHTML = PRIORITY_ORDER.map(p => {
-    const color = PRIORITY_COLORS[p];
-    const label = PRIORITY_LABELS[p];
+  // Build dynamic grid: collapsed columns get a thin fixed width, expanded get 1fr.
+  const colTemplate = order.map(p => isGroupCollapsed(p) ? "40px" : "1fr").join(" ") + " 40px";
+  board.style.gridTemplateColumns = colTemplate;
+
+  board.innerHTML = order.map(p => {
+    const color = groupColor(p);
+    const label = groupLabel(p);
+    const count = grouped[p].length;
+
+    if (isGroupCollapsed(p)) {
+      return renderCollapsedColumn(p, color, label, count);
+    }
+
     grouped[p].sort((a, b) => {
       const sa = STATE_SORT_ORDER[pendingChanges[prKey(a)]?.state || a.state] ?? 99;
       const sb = STATE_SORT_ORDER[pendingChanges[prKey(b)]?.state || b.state] ?? 99;
       return sa - sb;
     });
     const cards = grouped[p].map(renderCard).join("");
+    const canDelete = count === 0 && p !== "uncategorized";
+    const deleteBtn = canDelete ? `<span class="col-delete" onclick="event.stopPropagation(); deleteGroup('${p}')" title="Delete empty group">&times;</span>` : "";
     return `<div class="column" data-priority="${p}"
       ondragover="handleDragOver(event)"
       ondragleave="handleDragLeave(event)"
       ondrop="handleDrop(event)">
-      <div class="column-header" style="color:${color}">
-        ${label} <span class="count">${grouped[p].length}</span>
+      <div class="column-header" style="color:${color}" draggable="true"
+        ondragstart="handleColumnDragStart(event)"
+        ondragend="handleColumnDragEnd(event)">
+        <span><span class="col-collapse" onclick="event.stopPropagation(); toggleCollapse('${p}')" title="Collapse">&laquo;</span> ${label}</span>
+        <span>${deleteBtn}<span class="count">${count}</span></span>
       </div>
       <div class="column-cards">${cards}</div>
     </div>`;
-  }).join("");
+  }).join("") + renderAddGroupButton();
 
   document.getElementById("my-prs-count").textContent = regular.length;
+
+  // Disable interactive elements in read-only mode.
+  if (gcsReadOnly) {
+    document.querySelectorAll(".card").forEach(c => { c.draggable = false; c.classList.add("no-drag"); });
+    document.querySelectorAll(".card-state").forEach(s => { s.disabled = true; });
+    document.querySelectorAll(".col-collapse, .col-delete, .add-group-col").forEach(el => { el.style.pointerEvents = "none"; el.style.opacity = "0.4"; });
+  }
 }
 
 
