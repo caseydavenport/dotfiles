@@ -1121,7 +1121,7 @@ function renderCard(pr) {
   const age = ageHtml(pr.created_at);
   const ciHistory = ciHistoryHtml(pr.ci_history);
   const isUntriaged = !pr.triaged && !isChanged;
-  const isReadyToMerge = (currentState === "mergeable" && pr.ci === "pass") || isCherryPick;
+  const isReadyToMerge = pr.ci === "pass" && (currentState === "mergeable" || isCherryPick);
   const newTag = isUntriaged ? `<span class="new-tag" onclick="event.stopPropagation(); triageCard('${key}')" style="cursor:pointer" title="Click to dismiss">NEW</span>` : "";
 
   const visualState = isCherryPick ? "mergeable" : currentState;
