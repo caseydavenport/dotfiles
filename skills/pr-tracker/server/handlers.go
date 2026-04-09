@@ -318,6 +318,63 @@ func applyChange(data *TrackerData, change PRChange) bool {
 	return false
 }
 
+// mergeUserFields overlays user-set fields from current (on-disk) data onto
+// refreshed data. This prevents the refresh from overwriting PATCHes that
+// landed while the slow GitHub API calls were running.
+func mergeUserFields(refreshed, current *TrackerData) {
+	// Build lookup of current PR state keyed by repo#number.
+	currentPRs := map[string]*PR{}
+	for i := range current.Repos {
+		for j := range current.Repos[i].PRs {
+			key := fmt.Sprintf("%s#%d", current.Repos[i].Name, current.Repos[i].PRs[j].Number)
+			currentPRs[key] = &current.Repos[i].PRs[j]
+		}
+	}
+
+	// Overlay user-set fields onto refreshed PRs.
+	for i := range refreshed.Repos {
+		for j := range refreshed.Repos[i].PRs {
+			key := fmt.Sprintf("%s#%d", refreshed.Repos[i].Name, refreshed.Repos[i].PRs[j].Number)
+			if cur, ok := currentPRs[key]; ok {
+				refreshed.Repos[i].PRs[j].Priority = cur.Priority
+				refreshed.Repos[i].PRs[j].Notes = cur.Notes
+				refreshed.Repos[i].PRs[j].Triaged = cur.Triaged
+				refreshed.Repos[i].PRs[j].DependsOn = cur.DependsOn
+				refreshed.Repos[i].PRs[j].Blocks = cur.Blocks
+			}
+		}
+	}
+
+	// Use current groups (user may have added/removed/reordered).
+	refreshed.Groups = current.Groups
+
+	// Preserve current version so writeData increments from the right base.
+	refreshed.Version = current.Version
+
+	// Preserve user-set priority on review requests and issues.
+	currentRRPriority := map[string]string{}
+	for _, rr := range current.ReviewRequests {
+		currentRRPriority[fmt.Sprintf("%s#%d", rr.Repo, rr.Number)] = rr.Priority
+	}
+	for i := range refreshed.ReviewRequests {
+		key := fmt.Sprintf("%s#%d", refreshed.ReviewRequests[i].Repo, refreshed.ReviewRequests[i].Number)
+		if p, ok := currentRRPriority[key]; ok {
+			refreshed.ReviewRequests[i].Priority = p
+		}
+	}
+
+	currentIssuePriority := map[string]string{}
+	for _, issue := range current.AssignedIssues {
+		currentIssuePriority[fmt.Sprintf("%s#%d", issue.Repo, issue.Number)] = issue.Priority
+	}
+	for i := range refreshed.AssignedIssues {
+		key := fmt.Sprintf("%s#%d", refreshed.AssignedIssues[i].Repo, refreshed.AssignedIssues[i].Number)
+		if p, ok := currentIssuePriority[key]; ok {
+			refreshed.AssignedIssues[i].Priority = p
+		}
+	}
+}
+
 // handleRefresh fetches fresh data from GitHub and returns the updated tracker data.
 func handleRefresh(w http.ResponseWriter, r *http.Request) {
 	if gcsReadOnlyGuard(w) {
@@ -337,9 +394,19 @@ func handleRefresh(w http.ResponseWriter, r *http.Request) {
 	// Run refresh outside the lock (slow network calls).
 	refreshed, errs := refreshFromGitHub(existing)
 	refreshed.LastRefreshed = time.Now().Format("2006-01-02T15:04:05-07:00")
-	ensureGroups(refreshed)
 
+	// Re-read current data under lock to pick up any PATCHes that landed
+	// during the slow GitHub calls, then merge their user-set fields into
+	// the refreshed data so we don't overwrite recent changes.
 	fileMu.Lock()
+	current, err := readData()
+	if err != nil {
+		fileMu.Unlock()
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	mergeUserFields(refreshed, current)
+	ensureGroups(refreshed)
 	if err := writeData(refreshed); err != nil {
 		fileMu.Unlock()
 		writeError(w, http.StatusInternalServerError, err.Error())

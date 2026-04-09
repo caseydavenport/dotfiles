@@ -836,6 +836,12 @@ const STATE_SORT_ORDER = {
   "needs-work": 3,
   "draft": 4,
 };
+const CI_SORT_ORDER = {
+  "pass": 0,
+  "pending": 1,
+  "fail": 2,
+  "unknown": 3,
+};
 const CI_COLORS = {
   "pass": "#2da44e",
   "fail": "#cf222e",
@@ -1610,7 +1616,10 @@ function renderMyPrs() {
     grouped[p].sort((a, b) => {
       const sa = STATE_SORT_ORDER[pendingChanges[prKey(a)]?.state || a.state] ?? 99;
       const sb = STATE_SORT_ORDER[pendingChanges[prKey(b)]?.state || b.state] ?? 99;
-      return sa - sb;
+      if (sa !== sb) return sa - sb;
+      const ca = CI_SORT_ORDER[a.ci] ?? 99;
+      const cb = CI_SORT_ORDER[b.ci] ?? 99;
+      return ca - cb;
     });
     const cards = grouped[p].map(renderCard).join("");
     const canDelete = count === 0 && p !== "uncategorized";
@@ -1788,7 +1797,7 @@ function renderAssignedIssues() {
 loadData();
 
 // Auto-refresh every 10 minutes.
-const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
+const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
 let nextRefreshTime = Date.now() + REFRESH_INTERVAL_MS;
 
 function resetRefreshTimer() {
@@ -1803,15 +1812,37 @@ setInterval(() => {
   } else {
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    el.textContent = "· next refresh in " + m + ":" + (s < 10 ? "0" : "") + s;
+    const suffix = (hasPendingChanges && hasPendingChanges()) ? " (paused: pending changes)" :
+                   (isUserIdle && !isUserIdle()) ? " (paused: active)" : "";
+    el.textContent = "· next refresh in " + m + ":" + (s < 10 ? "0" : "") + s + suffix;
   }
 }, 1000);
 
+// Track user activity — defer auto-refresh while user is interacting.
+const IDLE_THRESHOLD_MS = 30 * 1000;
+let lastActivity = Date.now();
+function markActivity() { lastActivity = Date.now(); }
+document.addEventListener("mousedown", markActivity);
+document.addEventListener("keydown", markActivity);
+document.addEventListener("dragstart", markActivity);
+document.addEventListener("input", markActivity);
+
+function hasPendingChanges() {
+  return Object.keys(pendingChanges).length > 0 || Object.keys(pendingItemChanges).length > 0;
+}
+
+function isUserIdle() {
+  return (Date.now() - lastActivity) >= IDLE_THRESHOLD_MS;
+}
+
 setInterval(() => {
-  if (Object.keys(pendingChanges).length === 0 && Object.keys(pendingItemChanges).length === 0) {
-    refreshFromGitHub();
+  if (hasPendingChanges()) {
+    resetRefreshTimer();
+  } else if (!isUserIdle()) {
+    // User is active but no pending changes — defer a bit.
     resetRefreshTimer();
   } else {
+    refreshFromGitHub();
     resetRefreshTimer();
   }
 }, REFRESH_INTERVAL_MS);
