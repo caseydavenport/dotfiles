@@ -631,6 +631,34 @@
     to { transform: rotate(360deg); }
   }
 
+  .gcs-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+  .gcs-badge[data-status="synced"] { color: #3fb950; border-color: #23863640; }
+  .gcs-badge[data-status="pending"] { color: #bf8700; border-color: #bf870040; }
+  .gcs-badge[data-status="uploading"] { color: #58a6ff; border-color: #58a6ff40; }
+  .gcs-badge[data-status="error"] { color: #f85149; border-color: #f8514940; }
+  .gcs-badge[data-status="disabled"] { display: none; }
+  .gcs-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .gcs-badge[data-status="uploading"] .gcs-dot { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
   .toast-container {
     position: fixed;
     top: 16px;
@@ -729,6 +757,7 @@
     </svg>
     <input type="text" id="search-input" placeholder="Filter PRs..." oninput="handleSearch(this.value)">
   </div>
+  <span class="gcs-badge" id="gcs-badge" data-status="disabled"><span class="gcs-dot"></span><span id="gcs-badge-label">GCS</span></span>
   <button class="refresh-btn" id="refresh-btn" onclick="refreshFromGitHub()" title="Refresh from GitHub">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
       <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/>
@@ -1786,6 +1815,21 @@ setInterval(() => {
     resetRefreshTimer();
   }
 }, REFRESH_INTERVAL_MS);
+
+// GCS sync status polling.
+const GCS_LABELS = {synced: "synced", pending: "saving…", uploading: "syncing", error: "sync error", disabled: ""};
+async function pollGCSStatus() {
+  try {
+    const resp = await fetch("/api/gcs-status");
+    if (!resp.ok) return;
+    const {status} = await resp.json();
+    const badge = document.getElementById("gcs-badge");
+    badge.dataset.status = status;
+    document.getElementById("gcs-badge-label").textContent = GCS_LABELS[status] || status;
+  } catch (e) { /* ignore */ }
+}
+pollGCSStatus();
+setInterval(pollGCSStatus, 2000);
 </script>
 </body>
 </html>

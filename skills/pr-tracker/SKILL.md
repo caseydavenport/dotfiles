@@ -85,7 +85,9 @@ Triggers: "browse PRs", "browse my PRs", "open PR dashboard", "PR dashboard", "s
    docker run -d --rm --name pr-dashboard \
      -p 48923:48923 \
      -e GITHUB_TOKEN="$GITHUB_TOKEN" \
+     -e GCS_BUCKET=caseys-stuff \
      -v ~/.claude/projects/-home-casey-repos-gopath-src-github-com-projectcalico-calico/memory:/data \
+     -v ~/.config/gcloud/application_default_credentials.json:/etc/gcs/adc.json:ro \
      pr-dashboard
    ```
 

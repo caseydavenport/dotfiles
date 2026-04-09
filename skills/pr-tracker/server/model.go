@@ -30,6 +30,7 @@ type GroupChanges struct {
 
 // TrackerData is the top-level structure stored in pr_tracker.yaml.
 type TrackerData struct {
+	Version        int             `yaml:"version" json:"version"`
 	LastRefreshed  string          `yaml:"last_refreshed" json:"last_refreshed"`
 	Groups         []Group         `yaml:"groups" json:"groups"`
 	Repos          []Repo          `yaml:"repos" json:"repos"`

@@ -60,6 +60,7 @@ func readData() (*TrackerData, error) {
 }
 
 func writeData(data *TrackerData) error {
+	data.Version++
 	raw, err := yaml.Marshal(data)
 	if err != nil {
 		return fmt.Errorf("marshaling yaml: %w", err)
@@ -70,18 +71,10 @@ func writeData(data *TrackerData) error {
 	return nil
 }
 
-// gcsUploadIfEnabled uploads the YAML to GCS if a bucket is configured.
-// Updates gcsErr on failure, clears it on success.
+// gcsUploadIfEnabled marks data as dirty for async GCS upload.
 func gcsUploadIfEnabled() {
-	if *gcsBucket == "" {
-		return
-	}
-	if err := gcsUpload(*yamlPath, *gcsBucket); err != nil {
-		log.Printf("gcs: upload failed: %v", err)
-		gcsErr = err.Error()
-	} else if gcsErr != "" {
-		log.Println("gcs: upload succeeded, clearing previous error")
-		gcsErr = ""
+	if syncer != nil {
+		syncer.markDirty()
 	}
 }
 
@@ -179,12 +172,6 @@ func handlePatchPRs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gcsUploadIfEnabled()
-	if gcsErr != "" {
-		writeError(w, http.StatusInternalServerError,
-			fmt.Sprintf("changes saved locally but GCS sync failed: %s", gcsErr))
-		return
-	}
-
 	writeJSON(w, http.StatusOK, data)
 }
 
