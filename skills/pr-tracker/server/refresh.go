@@ -195,10 +195,10 @@ func refreshFromGitHub(existing *TrackerData) (*TrackerData, []error) {
 
 	// Build lookup from existing data for preserving user-set fields.
 	existingPRs := map[string]*PR{}
-	for _, repo := range existing.Repos {
-		for i := range repo.PRs {
-			key := fmt.Sprintf("%s#%d", repo.Name, repo.PRs[i].Number)
-			existingPRs[key] = &repo.PRs[i]
+	for i := range existing.Repos {
+		for j := range existing.Repos[i].PRs {
+			key := fmt.Sprintf("%s#%d", existing.Repos[i].Name, existing.Repos[i].PRs[j].Number)
+			existingPRs[key] = &existing.Repos[i].PRs[j]
 		}
 	}
 
@@ -210,17 +210,51 @@ func refreshFromGitHub(existing *TrackerData) (*TrackerData, []error) {
 	}
 
 	// Process Casey's open PRs, grouped by tracked repo.
+	// Track which PRs we saw so we can reconcile missing ones below.
+	seenPRs := map[string]bool{}
 	for _, gpr := range resp.Data.MyPRs.Nodes {
 		repo := gpr.Repository.NameWithOwner
 		if !trackedRepoSet[repo] {
 			continue
 		}
 		pr := convertPR(gpr, repo, existingPRs)
+		seenPRs[fmt.Sprintf("%s#%d", repo, pr.Number)] = true
 		for i := range result.Repos {
 			if result.Repos[i].Name == repo {
 				result.Repos[i].PRs = append(result.Repos[i].PRs, pr)
 				break
 			}
+		}
+	}
+
+	// Reconcile PRs that are in local data but missing from the GraphQL response.
+	// GitHub's search is eventually consistent; transient flakes would otherwise
+	// drop the PR and silently reset its priority to "uncategorized" on return.
+	// Only remove a PR when `gh pr view` positively confirms it is closed,
+	// merged, or 404. Any other error keeps the PR and retries next refresh.
+	for i := range existing.Repos {
+		repoName := existing.Repos[i].Name
+		resultIdx := -1
+		for ri := range result.Repos {
+			if result.Repos[ri].Name == repoName {
+				resultIdx = ri
+				break
+			}
+		}
+		if resultIdx < 0 {
+			continue
+		}
+		for j := range existing.Repos[i].PRs {
+			number := existing.Repos[i].PRs[j].Number
+			key := fmt.Sprintf("%s#%d", repoName, number)
+			if seenPRs[key] {
+				continue
+			}
+			if verifyPRClosed(repoName, number) {
+				continue
+			}
+			log.Printf("refresh: %s missing from search but still open, preserving", key)
+			result.Repos[resultIdx].PRs = append(result.Repos[resultIdx].PRs, existing.Repos[i].PRs[j])
 		}
 	}
 
@@ -507,6 +541,41 @@ func deriveState(isDraft bool, reviewDecision string) string {
 	default:
 		return "needs-review"
 	}
+}
+
+// verifyPRClosed returns true only when `gh pr view` positively confirms that
+// the PR has been closed, merged, or deleted (404). On any other error
+// (network blip, rate limit, parse failure) it returns false so the caller
+// keeps the PR and retries on the next refresh. This protects against
+// transient GitHub search flakes silently dropping tracked PRs.
+func verifyPRClosed(repo string, number int) bool {
+	cmd := exec.Command("gh", "pr", "view", fmt.Sprintf("%d", number), "--repo", repo, "--json", "state")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		outStr := string(out)
+		// gh exits non-zero for 404s with one of these markers in stderr.
+		if strings.Contains(outStr, "Could not resolve to a PullRequest") ||
+			strings.Contains(outStr, "no pull requests found") ||
+			strings.Contains(outStr, "HTTP 404") {
+			log.Printf("refresh: %s#%d returned 404, dropping", repo, number)
+			return true
+		}
+		log.Printf("refresh: verify %s#%d failed (keeping): %s", repo, number, strings.TrimSpace(outStr))
+		return false
+	}
+
+	var data struct {
+		State string `json:"state"`
+	}
+	if err := json.Unmarshal(out, &data); err != nil {
+		log.Printf("refresh: parsing verify output for %s#%d failed (keeping): %v", repo, number, err)
+		return false
+	}
+	if data.State == "CLOSED" || data.State == "MERGED" {
+		log.Printf("refresh: %s#%d is %s, dropping", repo, number, data.State)
+		return true
+	}
+	return false
 }
 
 var ossPRPattern = regexp.MustCompile(`projectcalico/calico#(\d+)`)
