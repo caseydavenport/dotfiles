@@ -10,6 +10,10 @@ Primary repos: `projectcalico/calico` (OSS), `tigera/calico-private` (enterprise
 
 Run `date` to check the current date and time.
 
+## Superpowers
+
+- Designs, specs, and docs produced by superpowers skills should go into `/home/casey/designs` under an appropriate subpath (e.g., `/home/casey/designs/<project>/<feature>/`).
+
 ## General Preferences
 
 - Always use the casey-voice skill when writing text that will appear under my name

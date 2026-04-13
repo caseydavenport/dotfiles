@@ -186,6 +186,32 @@ gw() {
   local dir
   dir=$(git worktree list | fzf --no-multi | awk '{print $1}') && cd "$dir"
 }
+unalias gco gcor glog gbd 2>/dev/null
+gco() {
+  local branch
+  branch=$(git branch --sort=-committerdate --format='%(refname:short)' |
+    fzf --no-multi --preview 'git log --oneline -15 {}') &&
+    git checkout "$branch"
+}
+gcor() {
+  local branch
+  branch=$(git branch -r --sort=-committerdate --format='%(refname:short)' |
+    grep -v HEAD |
+    fzf --no-multi --preview 'git log --oneline -15 {}') &&
+    git checkout "${branch#*/}"
+}
+glog() {
+  local commit
+  commit=$(git log --oneline --color=always |
+    fzf --ansi --no-multi --preview 'git show --color=always {1}') &&
+    git show "$(echo "$commit" | awk '{print $1}')"
+}
+gbd() {
+  local branches
+  branches=$(git branch --sort=-committerdate --format='%(refname:short)' |
+    fzf --multi --preview 'git log --oneline -15 {}') &&
+    echo "$branches" | xargs git branch -d
+}
 
 # Use kubecolor for colorized kubectl output if available.
 command -v kubecolor &>/dev/null && alias kubectl='kubecolor' && alias k='kubecolor' && compdef kubecolor=kubectl
