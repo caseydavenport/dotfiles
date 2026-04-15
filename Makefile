@@ -1,4 +1,4 @@
-.PHONY: setup symlinks zshrc tmux claude gitconfig p10k dircolors \
+.PHONY: setup symlinks zshrc tmux gitconfig p10k dircolors \
        zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
        zsh-syntax-highlighting zsh-history-substring-search fzf \
        terminal-bling neovim nvimrc packages apt docker help bat-themes bin
@@ -27,22 +27,13 @@ setup: symlinks zsh-addons terminal-bling
 ############################################################
 # Symlink config files into place
 ############################################################
-symlinks: zshrc tmux claude gitconfig p10k dircolors delta bat-themes bin
+symlinks: zshrc tmux gitconfig p10k dircolors delta bat-themes bin
 
 zshrc:
 	ln -sf $(CURDIR)/.zshrc ${HOME}/.zshrc
 
 tmux:
 	ln -sf $(CURDIR)/.tmux.conf ${HOME}/.tmux.conf
-
-claude:
-	mkdir -p ${HOME}/.claude/skills
-	ln -sf $(CURDIR)/CLAUDE.md ${HOME}/.claude/CLAUDE.md
-	@for skill in $(CURDIR)/skills/*/; do \
-		name=$$(basename $$skill); \
-		ln -sfn $$skill ${HOME}/.claude/skills/$$name; \
-		echo "Linked skill: $$name"; \
-	done
 
 gitconfig:
 	ln -sf $(CURDIR)/.gitconfig ${HOME}/.gitconfig
