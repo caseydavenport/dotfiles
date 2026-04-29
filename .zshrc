@@ -182,10 +182,33 @@ alias gpc='git push cd4'
 alias gwl='git worktree list'
 alias gwr='git worktree remove'
 alias gwp='git worktree prune'
+
+# Fzf-powered git worktree switcher. Lists worktrees in fzf, then cd's into the selected one.
 gw() {
   local dir
   dir=$(git worktree list | fzf --no-multi | awk '{print $1}') && cd "$dir"
 }
+
+# Creates a git worktree for the given branch name (or existing branch if it exists) and cd's into it.
+# Then launches Claude.
+cwt() {
+      local name="$1"
+      local wt="../$name"
+      if [ ! -d "$wt" ]; then
+        if git show-ref --verify --quiet "refs/heads/$name"; then
+          git worktree add "$wt" "$name"
+        else
+          git worktree add "$wt" origin/master -b "$name"
+        fi
+      fi
+      cd "$wt" && claude
+}
+
+# Other fzf-powered git helpers:
+# - gco (checkout local branch)
+# - gcor (checkout remote branch)
+# - glog (interactive log)
+# - gbd (delete branches)
 unalias gco gcor glog gbd 2>/dev/null
 gco() {
   local branch
