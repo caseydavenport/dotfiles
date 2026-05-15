@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# Dump detailed hardware info to a file for later inspection.
+# Usage: sudo hwinfo [output-file]   (defaults to /tmp/hwinfo.txt)
+
+set -u
+
+if [[ $EUID -ne 0 ]]; then
+    echo "This script needs root for full output. Re-running with sudo..." >&2
+    exec sudo -E "$0" "$@"
+fi
+
+OUT="${1:-/tmp/hwinfo.txt}"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+section() { echo; echo "===== $* ====="; }
+
+{
+    section "DATE / HOST"
+    date
+    hostname
+    uname -a
+    [[ -r /etc/os-release ]] && { echo; cat /etc/os-release; }
+
+    section "SYSTEM / BASEBOARD / BIOS"
+    have dmidecode && dmidecode -t system -t baseboard -t bios || echo "dmidecode missing"
+
+    section "CPU (lscpu)"
+    have lscpu && lscpu
+    section "CPU (dmidecode)"
+    have dmidecode && dmidecode -t processor
+
+    section "MEMORY USAGE"
+    free -h
+
+    section "MEMORY ARRAY (max capacity / slot count)"
+    have dmidecode && dmidecode -t 16
+
+    section "MEMORY DIMMs"
+    have dmidecode && dmidecode -t memory
+
+    section "PCI DEVICES"
+    have lspci && lspci -nnk
+
+    section "GPU (detailed)"
+    have lspci && lspci -vnn | grep -A 20 -E "VGA|3D|Display"
+    if have nvidia-smi; then
+        echo "--- nvidia-smi ---"
+        nvidia-smi
+    fi
+    if have glxinfo; then
+        echo "--- glxinfo -B ---"
+        glxinfo -B 2>/dev/null
+    fi
+
+    section "STORAGE (lsblk)"
+    lsblk -o NAME,SIZE,TYPE,ROTA,MODEL,SERIAL,TRAN
+
+    if have nvme; then
+        section "NVMe LIST"
+        nvme list 2>/dev/null
+    fi
+
+    if have smartctl; then
+        section "DRIVE IDENTITY (smartctl)"
+        for d in /dev/sd? /dev/nvme?n?; do
+            [[ -e "$d" ]] || continue
+            echo "--- $d ---"
+            smartctl -i "$d" 2>/dev/null | grep -E "Model|Serial|Capacity|Form|Rotation|SATA|NVMe|Firmware"
+        done
+    fi
+
+    section "NETWORK INTERFACES"
+    ip -br link
+    echo
+    have lspci && lspci | grep -iE "ethernet|network|wireless"
+
+    section "USB DEVICES"
+    have lsusb && lsusb
+
+    section "LSHW SHORT"
+    have lshw && lshw -short
+
+    section "SENSORS"
+    have sensors && sensors
+} > "$OUT" 2>&1
+
+echo "Wrote: $OUT ($(wc -l < "$OUT") lines, $(du -h "$OUT" | cut -f1))"
