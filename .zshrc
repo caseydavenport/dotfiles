@@ -129,6 +129,10 @@ alias kaf='kubectl apply -f'
 alias kgts='kubectl get tigerastatus'
 alias kev='kubectl get events --sort-by=.lastTimestamp'
 
+# Aliases for multiple Claude logins on the same box.
+alias claude-free='CLAUDE_CONFIG_DIR="$HOME/.claude-free" claude'
+alias claude-personal='CLAUDE_CONFIG_DIR="$HOME/.claude-personal" claude'
+
 # fzf-powered kubectl helpers: pass namespace flags as needed, e.g. kl -n calico-system
 # Unalias names that oh-my-zsh kubectl plugin defines so we can override with functions.
 unalias kl kpf 2>/dev/null

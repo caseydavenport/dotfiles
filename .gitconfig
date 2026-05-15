@@ -26,3 +26,7 @@
 [hub]
 	protocol = ssh
 [alias]
+[branch]
+	autoSetupMerge = false
+[push]
+	autoSetupRemote = true
