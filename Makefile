@@ -63,7 +63,8 @@ bin:
 	done
 
 nvimrc:
-	ln -sf $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
+	mkdir -p ${HOME}/.config/nvim/lua
+	ln -sfn $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
 
 ############################################################
 # ZSH addons
@@ -97,9 +98,10 @@ terminal-bling:
 ############################################################
 # Neovim (manual, not part of setup)
 ############################################################
-neovim: nvimrc
+neovim:
 	@command -v nvim >/dev/null || (wget -q https://github.com/neovim/neovim/releases/download/stable/nvim.appimage -O /tmp/nvim.appimage && chmod u+x /tmp/nvim.appimage && sudo mv /tmp/nvim.appimage /usr/local/bin/nvim)
 	@[ -d $(HOME)/.config/nvim/.git ] || git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
+	@$(MAKE) nvimrc
 
 ############################################################
 # Base packages + docker (manual, needs sudo)
