@@ -164,16 +164,16 @@ augroup END
 " Golang autocommands.
 "
 " Configure github.com/projectcalico GoGuruScope properly.
-autocmd BufRead /home/casey/repos/gopath/src/*.go
+autocmd BufRead $HOME/repos/gopath/src/*.go
       \  let s:tmp = matchlist(expand('%:p'),
-          \ '/home/casey/repos/gopath/src/\(github.com/projectcalico/[^/]\+\)')
+          \ '/repos/gopath/src/\(github.com/projectcalico/[^/]\+\)')
       \| if len(s:tmp) > 1 |  exe 'silent :GoGuruScope ' . s:tmp[1] | endif
       \| unlet s:tmp
 
 " Configure github.com/tigera GoGuruScope properly.
-autocmd BufRead /home/casey/repos/gopath/src/*.go
+autocmd BufRead $HOME/repos/gopath/src/*.go
       \  let s:tmp = matchlist(expand('%:p'),
-          \ '/home/casey/repos/gopath/src/\(github.com/tigera/[^/]\+\)')
+          \ '/repos/gopath/src/\(github.com/tigera/[^/]\+\)')
       \| if len(s:tmp) > 1 |  exe 'silent :GoGuruScope ' . s:tmp[1] | endif
       \| unlet s:tmp
 
