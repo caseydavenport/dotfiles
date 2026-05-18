@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+# Gather performance-relevant configuration and runtime data for analysis.
+# Complements `hwinfo` by focusing on tunables, daemons, throttling, and firmware.
+# Usage: sudo perfinfo [output-file]   (defaults to /tmp/perfinfo.txt)
+#
+# Some sections (turbostat) sample over time — total run takes ~70s.
+
+set -u
+
+if [[ $EUID -ne 0 ]]; then
+    echo "This script needs root for full output. Re-running with sudo..." >&2
+    exec sudo -E "$0" "$@"
+fi
+
+OUT="${1:-/tmp/perfinfo.txt}"
+
+have() { command -v "$1" >/dev/null 2>&1; }
+section() { echo; echo "===== $* ====="; }
+sub() { echo; echo "--- $* ---"; }
+catif() { [[ -r "$1" ]] && { echo "$1:"; cat "$1"; } || echo "$1: (missing)"; }
+
+{
+    section "DATE / HOST / KERNEL"
+    date
+    hostname
+    uname -a
+    [[ -r /etc/os-release ]] && grep PRETTY_NAME /etc/os-release
+
+    section "BOOT CMDLINE"
+    cat /proc/cmdline
+
+    section "FIRMWARE / BIOS"
+    sub "BIOS version (sysfs)"
+    catif /sys/class/dmi/id/bios_version
+    catif /sys/class/dmi/id/bios_date
+    catif /sys/class/dmi/id/sys_vendor
+    catif /sys/class/dmi/id/product_name
+    if have fwupdmgr; then
+        sub "fwupdmgr get-devices"
+        fwupdmgr get-devices 2>&1 | head -200
+        sub "fwupdmgr get-updates"
+        fwupdmgr get-updates 2>&1 || true
+    else
+        echo "fwupdmgr not installed"
+    fi
+
+    section "CPU FREQUENCY / GOVERNOR / EPP"
+    sub "scaling_driver"
+    catif /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
+    sub "scaling_governor (per-cpu, unique)"
+    cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | sort -u
+    sub "available governors"
+    catif /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors
+    sub "energy_performance_preference (per-cpu, unique)"
+    cat /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference 2>/dev/null | sort -u
+    sub "available EPP values"
+    catif /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_available_preferences
+    sub "energy_perf_bias (x86)"
+    if have x86_energy_perf_policy; then
+        x86_energy_perf_policy -r 2>/dev/null | head -20
+    fi
+    sub "intel_pstate status"
+    for f in /sys/devices/system/cpu/intel_pstate/*; do
+        [[ -f "$f" ]] || continue
+        echo -n "$f: "
+        cat "$f" 2>/dev/null
+    done
+    sub "current frequencies (MHz per cpu)"
+    grep MHz /proc/cpuinfo | head -16
+    sub "min/max frequencies"
+    echo "min: $(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq 2>/dev/null)"
+    echo "max: $(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null)"
+
+    section "CPU IDLE / C-STATES"
+    sub "idle driver"
+    catif /sys/devices/system/cpu/cpuidle/current_driver
+    sub "available C-states (cpu0)"
+    for s in /sys/devices/system/cpu/cpu0/cpuidle/state*; do
+        [[ -d "$s" ]] || continue
+        echo "$(basename $s): name=$(cat $s/name) disable=$(cat $s/disable) latency_us=$(cat $s/latency)"
+    done
+
+    section "CPU VULNERABILITIES / MITIGATIONS"
+    for f in /sys/devices/system/cpu/vulnerabilities/*; do
+        [[ -r "$f" ]] || continue
+        echo "$(basename $f): $(cat $f)"
+    done
+    sub "microcode revision"
+    grep -m1 microcode /proc/cpuinfo
+
+    section "THERMAL ZONES"
+    for z in /sys/class/thermal/thermal_zone*; do
+        [[ -d "$z" ]] || continue
+        t=$(cat $z/temp 2>/dev/null)
+        type=$(cat $z/type 2>/dev/null)
+        printf "%s: type=%s temp=%s°C\n" "$(basename $z)" "$type" "$(awk "BEGIN{printf \"%.1f\", $t/1000}")"
+    done
+
+    section "POWER LIMITS (RAPL)"
+    for d in /sys/class/powercap/intel-rapl:*; do
+        [[ -d "$d" ]] || continue
+        name=$(cat $d/name 2>/dev/null)
+        echo "--- $(basename $d) [$name] ---"
+        for f in constraint_0_name constraint_0_power_limit_uw constraint_0_time_window_us \
+                 constraint_1_name constraint_1_power_limit_uw constraint_1_time_window_us \
+                 enabled energy_uj; do
+            [[ -r "$d/$f" ]] && echo "  $f = $(cat $d/$f)"
+        done
+    done
+
+    section "TURBOSTAT (60s sample)"
+    if have turbostat; then
+        turbostat --quiet --interval 10 --num_iterations 6 2>&1 | tail -80
+    else
+        echo "turbostat not installed (apt install linux-tools-generic)"
+    fi
+
+    section "POWER DAEMONS / PROFILES"
+    sub "active power-related services"
+    systemctl is-active tlp power-profiles-daemon thermald tuned auto-cpufreq cpupower 2>/dev/null | paste -d= <(echo -e "tlp\npower-profiles-daemon\nthermald\ntuned\nauto-cpufreq\ncpupower") -
+    sub "platform_profile"
+    catif /sys/firmware/acpi/platform_profile
+    catif /sys/firmware/acpi/platform_profile_choices
+    if have powerprofilesctl; then
+        sub "powerprofilesctl"
+        powerprofilesctl 2>&1
+    fi
+    if have tlp-stat; then
+        sub "tlp-stat -s -c -p (selected)"
+        tlp-stat -s 2>&1 | head -40
+        tlp-stat -p 2>&1 | head -60
+    fi
+    sub "thermald status"
+    systemctl status thermald --no-pager 2>&1 | head -15
+
+    section "BATTERY"
+    if have upower; then
+        for b in $(upower -e | grep -i 'BAT\|battery'); do
+            upower -i "$b"
+        done
+    fi
+    catif /sys/class/power_supply/BAT0/energy_full
+    catif /sys/class/power_supply/BAT0/energy_full_design
+    catif /sys/class/power_supply/BAT0/cycle_count
+
+    section "MEMORY TUNABLES"
+    sub "vm.* sysctls"
+    for k in vm.swappiness vm.vfs_cache_pressure vm.dirty_ratio vm.dirty_background_ratio \
+             vm.dirty_expire_centisecs vm.overcommit_memory vm.min_free_kbytes; do
+        echo "$k = $(sysctl -n $k 2>/dev/null)"
+    done
+    sub "transparent hugepages"
+    catif /sys/kernel/mm/transparent_hugepage/enabled
+    catif /sys/kernel/mm/transparent_hugepage/defrag
+    sub "zswap"
+    for f in /sys/module/zswap/parameters/*; do
+        [[ -r "$f" ]] && echo "$(basename $f) = $(cat $f)"
+    done
+    sub "zram"
+    if [[ -d /sys/block/zram0 ]]; then
+        for f in /sys/block/zram0/{disksize,comp_algorithm,mem_used_total}; do
+            [[ -r "$f" ]] && echo "$(basename $f) = $(cat $f)"
+        done
+    else
+        echo "no zram device"
+    fi
+    sub "swap"
+    swapon --show
+    free -h
+
+    section "STORAGE TUNABLES"
+    sub "I/O scheduler per device"
+    for q in /sys/block/*/queue/scheduler; do
+        echo "$q: $(cat $q)"
+    done
+    sub "read-ahead, rotational, nr_requests"
+    for d in /sys/block/nvme*n* /sys/block/sd*; do
+        [[ -d "$d" ]] || continue
+        name=$(basename $d)
+        echo "$name: ra_kb=$(cat $d/queue/read_ahead_kb) rota=$(cat $d/queue/rotational) nr_req=$(cat $d/queue/nr_requests)"
+    done
+    sub "fstab"
+    grep -v '^\s*#' /etc/fstab | grep -v '^\s*$'
+    sub "mount (real fs only)"
+    mount | grep -vE '^(cgroup|proc|sys|tmpfs|devpts|securityfs|pstore|bpf|tracefs|debugfs|configfs|fusectl|mqueue|nsfs|hugetlbfs|ramfs|autofs|binfmt_misc|overlay)' | head -30
+    sub "fstrim status"
+    systemctl status fstrim.timer --no-pager 2>&1 | head -10
+    journalctl -u fstrim.service --no-pager 2>&1 | tail -10
+
+    section "NVMe SMART"
+    if have smartctl; then
+        for d in /dev/nvme?n?; do
+            [[ -e "$d" ]] || continue
+            sub "smartctl -a $d"
+            smartctl -a "$d" 2>&1 | grep -E "Model|Firmware|Capacity|Percentage Used|Available Spare|Data Units|Power.On Hours|Power Cycles|Media and Data|Error Information|Critical Warning|Temperature"
+        done
+    fi
+    if have nvme; then
+        sub "nvme smart-log"
+        for d in /dev/nvme?n?; do
+            [[ -e "$d" ]] || continue
+            echo "--- $d ---"
+            nvme smart-log "$d" 2>&1 | head -30
+        done
+    fi
+
+    section "GPU STATE"
+    sub "i915 / xe driver"
+    lspci -k | grep -A 3 -E "VGA|3D"
+    sub "prime-select"
+    have prime-select && prime-select query 2>&1
+    sub "NVIDIA runtime power state"
+    for d in /sys/bus/pci/devices/*/; do
+        vendor=$(cat $d/vendor 2>/dev/null)
+        class=$(cat $d/class 2>/dev/null)
+        if [[ "$vendor" == "0x10de" ]]; then
+            echo "$d"
+            echo "  runtime_status: $(cat ${d}power/runtime_status 2>/dev/null)"
+            echo "  control: $(cat ${d}power/control 2>/dev/null)"
+        fi
+    done
+    sub "i915 frequency info"
+    catif /sys/kernel/debug/dri/0/i915_frequency_info 2>/dev/null
+    sub "loaded GPU modules"
+    lsmod | grep -iE "nvidia|nouveau|i915|^xe " || true
+
+    section "NETWORK TUNABLES"
+    sub "TCP congestion control"
+    echo "current: $(sysctl -n net.ipv4.tcp_congestion_control)"
+    echo "available: $(sysctl -n net.ipv4.tcp_available_congestion_control)"
+    echo "default qdisc: $(sysctl -n net.core.default_qdisc)"
+    sub "Wi-Fi power save"
+    have iwconfig && iwconfig 2>&1 | grep -A 1 -iE "wlp|wlan"
+    have iw && for d in $(iw dev 2>/dev/null | awk '/Interface/{print $2}'); do
+        echo "$d: $(iw dev $d get power_save 2>/dev/null)"
+    done
+    sub "ethtool offloads (per up interface)"
+    for i in $(ip -br link | awk '$2=="UP" && $1!="lo" && $1 !~ /^(veth|docker|br-)/ {print $1}'); do
+        echo "--- $i ---"
+        ethtool -k "$i" 2>/dev/null | grep -E "^(rx-checksumming|tx-checksumming|tcp-segmentation|generic-segmentation|generic-receive|large-receive|rx-vlan|tx-vlan):"
+        ethtool "$i" 2>/dev/null | grep -E "Speed|Duplex|Link"
+    done
+
+    section "BOOT PERFORMANCE"
+    sub "systemd-analyze"
+    systemd-analyze 2>&1
+    sub "systemd-analyze blame (top 20)"
+    systemd-analyze blame 2>&1 | head -20
+    sub "systemd-analyze critical-chain"
+    systemd-analyze critical-chain 2>&1 | head -30
+    sub "failed units"
+    systemctl --failed --no-pager 2>&1
+
+    section "TOP CPU / MEMORY CONSUMERS"
+    sub "top 10 by RSS"
+    ps -eo pid,user,%cpu,%mem,rss,comm --sort=-rss 2>/dev/null | head -11
+    sub "top 10 by CPU"
+    ps -eo pid,user,%cpu,%mem,rss,comm --sort=-%cpu 2>/dev/null | head -11
+    sub "running enterprise security agents"
+    ps -eo pid,user,%cpu,%mem,rss,comm 2>/dev/null | grep -iE "sentinel|s1[-_]agent|ir_agent|rapid7|crowdstrike|falcon|cylance|carbon" | grep -v grep || echo "(none detected)"
+
+    section "SYSTEMD DROP-INS FOR SECURITY AGENTS"
+    for svc in sentinelone s1-agent ir_agent rapid7 falcon-sensor; do
+        for d in /run/systemd/system/${svc}.service.d /etc/systemd/system/${svc}.service.d; do
+            [[ -d "$d" ]] || continue
+            echo "--- $d ---"
+            ls -la "$d" 2>/dev/null
+            for f in "$d"/*.conf; do
+                [[ -r "$f" ]] && { echo "## $f"; cat "$f"; }
+            done
+        done
+    done
+
+    section "DESKTOP / SESSION"
+    sub "session type"
+    echo "XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-unknown}"
+    echo "XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-unknown}"
+    echo "WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-unset}"
+    sub "snap list (count + heavy)"
+    have snap && { snap list 2>/dev/null | wc -l; echo "(lines)"; snap list 2>/dev/null | head -20; }
+    sub "loop device count"
+    lsblk | grep -c '^loop' || true
+
+    section "KERNEL LOG ERRORS / WARNINGS (last boot)"
+    journalctl -k -p err -b --no-pager 2>&1 | tail -50
+    sub "thermal throttle events"
+    dmesg 2>&1 | grep -iE "throttl|thermal" | tail -20 || true
+
+    section "PACKAGES — KERNEL / MICROCODE / FIRMWARE"
+    have apt && {
+        apt list --installed 2>/dev/null | grep -E "^(linux-image|linux-headers|linux-generic|intel-microcode|amd64-microcode|fwupd|thermald|tlp|power-profiles-daemon)/" | sort
+    }
+    sub "available kernel upgrades"
+    have apt-cache && apt-cache policy linux-generic-hwe-22.04 linux-generic 2>/dev/null | head -20
+
+    section "FILESYSTEM USAGE"
+    df -hT -x tmpfs -x devtmpfs -x squashfs -x overlay 2>/dev/null
+
+} > "$OUT" 2>&1
+
+echo "Wrote: $OUT ($(wc -l < "$OUT") lines, $(du -h "$OUT" | cut -f1))"
