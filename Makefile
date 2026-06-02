@@ -1,4 +1,4 @@
-.PHONY: setup symlinks zshrc tmux gitconfig p10k dircolors \
+.PHONY: setup symlinks zshrc tmux gitconfig p10k dircolors wezterm \
        zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
        zsh-syntax-highlighting zsh-history-substring-search fzf \
        terminal-bling neovim nvimrc packages apt docker help bat-themes bin
@@ -27,7 +27,7 @@ setup: symlinks zsh-addons terminal-bling
 ############################################################
 # Symlink config files into place
 ############################################################
-symlinks: zshrc tmux gitconfig p10k dircolors delta bat-themes bin
+symlinks: zshrc tmux gitconfig p10k dircolors delta bat-themes bin wezterm
 
 zshrc:
 	ln -sf $(CURDIR)/.zshrc ${HOME}/.zshrc
@@ -54,6 +54,10 @@ bat-themes:
 	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Macchiato.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Macchiato.tmTheme"
 	ln -sf $(CURDIR)/.config/bat/themes/"Catppuccin Frappe.tmTheme" ${HOME}/.config/bat/themes/"Catppuccin Frappe.tmTheme"
 	$(shell command -v bat || command -v batcat) cache --build
+
+wezterm:
+	mkdir -p ${HOME}/.config/wezterm
+	ln -sf $(CURDIR)/.config/wezterm/wezterm.lua ${HOME}/.config/wezterm/wezterm.lua
 
 bin:
 	mkdir -p ${HOME}/.local/bin
