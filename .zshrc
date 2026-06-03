@@ -320,5 +320,10 @@ command -v eza &>/dev/null && alias ls='eza --icons --group-directories-first' &
 # Use "z <partial>" to jump, "zi" for interactive fuzzy selection.
 command -v zoxide &>/dev/null && eval "$(zoxide init zsh)"
 
+# tmux: named-session aliases for the multi-monitor setup. -A attaches if the
+# session exists, creates it otherwise — pairs with tmux-continuum auto-restore.
+alias tm-main='tmux new-session -A -s main'
+alias tm-side='tmux new-session -A -s side'
+
 # If there is a local env file, source it.
-[ -f .customenv ] && source .customenv
+[ -f ~/.casey.customenv ] && source ~/.casey.customenv
