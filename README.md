@@ -23,6 +23,8 @@ make zsh-addons     # Just install zsh plugins
 make terminal-bling # Just install CLI tools (needs sudo)
 make neovim         # Install neovim + NvChad (not part of setup)
 make packages       # Base apt packages + docker (not part of setup)
+make kde            # Install Plasma + restore KDE config snapshot (not part of setup)
+make kde-export     # Refresh the KDE config snapshot from this machine
 make help           # List all targets
 ```
 
@@ -32,5 +34,6 @@ make help           # List all targets
 - **tmux** -- Powerline status bar with k8s context, sync-panes indicator, true color + undercurl
 - **git** -- delta for side-by-side syntax-highlighted diffs
 - **CLI tools** -- eza, bat, delta, lolcat, kubectx, kubens, k9s, stern, kubectl-tree, kubectl-neat
+- **KDE Plasma** -- desktop config snapshot (theme, panels, shortcuts, virtual desktops) for replicating this setup on another machine. See [kde/KDE-SETUP.md](kde/KDE-SETUP.md).
 
 See [TERMINAL-BLING.md](TERMINAL-BLING.md) for the full cheatsheet.

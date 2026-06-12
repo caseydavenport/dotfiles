@@ -1,0 +1,11 @@
+[$Version]
+update_info=kscreenlocker.upd:0.1-autolock
+
+[Daemon]
+LockGrace=69
+Timeout=15
+
+[Greeter][Wallpaper][org.kde.image][General]
+Image=/home/casey/repos/catppuccin-wallpapers/landscapes/shaded_landscape.png
+PreviewImage=/home/casey/repos/catppuccin-wallpapers/landscapes/shaded_landscape.png
+SlidePaths=/usr/share/plasma/wallpapers/,/usr/share/wallpapers/

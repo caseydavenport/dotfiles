@@ -1,0 +1,8 @@
+[FileDialogSize]
+2 screens: Height=862
+2 screens: Width=1300
+
+[KFileDialog Settings]
+Recent Files[$e]=Battle.net-Setup.exe,file:$HOME/Downloads/pixel-galaxy.png,file:$HOME/.steam/steam/steamapps/compatdata/2771175259/pfx/drive_c/Program Files (x86)/Battle.net/Battle.net.exe,file:$HOME/.steam/steam/steamapps/compatdata/2771175259/pfx/drive_c/Program Files (x86)/Battle.net/Battle.net Launcher.exe,file:$HOME/Games/Battle.net-Setup.exe
+Recent URLs[$e]=file:$HOME/Games/,file:$HOME/.steam/steam/steamapps/compatdata/2771175259/pfx/drive_c/Program Files (x86)/Battle.net/,file:$HOME/,file:$HOME/Downloads/
+detailViewIconSize=16

@@ -1,0 +1,19 @@
+{
+    "id": "b6fb74224c311cc8f184f8289f6323ca",
+    "metadata": {
+        "fullname": "xrandr-Dell Inc.-DELL U3023E-FXXJ4H3",
+        "name": "DP-4"
+    },
+    "mode": {
+        "refresh": 59.971588134765625,
+        "size": {
+            "height": 1600,
+            "width": 2560
+        }
+    },
+    "overscan": 0,
+    "rgbrange": 0,
+    "rotation": 1,
+    "scale": 1,
+    "vrrpolicy": 2
+}

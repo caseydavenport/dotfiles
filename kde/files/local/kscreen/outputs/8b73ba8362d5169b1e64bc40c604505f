@@ -1,0 +1,19 @@
+{
+    "id": "8b73ba8362d5169b1e64bc40c604505f",
+    "metadata": {
+        "fullname": "xrandr-Dell Inc.-Dell S2716DG-#ASPTbBkaBk/d",
+        "name": "DP-2"
+    },
+    "mode": {
+        "refresh": 59.9505500793457,
+        "size": {
+            "height": 1440,
+            "width": 2560
+        }
+    },
+    "overscan": 0,
+    "rgbrange": 0,
+    "rotation": 8,
+    "scale": 1,
+    "vrrpolicy": 2
+}

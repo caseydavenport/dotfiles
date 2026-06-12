@@ -1,0 +1,52 @@
+[
+    {
+        "enabled": true,
+        "id": "8b73ba8362d5169b1e64bc40c604505f",
+        "metadata": {
+            "fullname": "xrandr-Dell Inc.-Dell S2716DG-#ASPTbBkaBk/d",
+            "name": "DP-2"
+        },
+        "mode": {
+            "refresh": 59.9505500793457,
+            "size": {
+                "height": 1440,
+                "width": 2560
+            }
+        },
+        "overscan": 0,
+        "pos": {
+            "x": 2560,
+            "y": 0
+        },
+        "priority": 2,
+        "rgbrange": 0,
+        "rotation": 8,
+        "scale": 1,
+        "vrrpolicy": 2
+    },
+    {
+        "enabled": true,
+        "id": "b6fb74224c311cc8f184f8289f6323ca",
+        "metadata": {
+            "fullname": "xrandr-Dell Inc.-DELL U3023E-FXXJ4H3",
+            "name": "DP-4"
+        },
+        "mode": {
+            "refresh": 59.971588134765625,
+            "size": {
+                "height": 1600,
+                "width": 2560
+            }
+        },
+        "overscan": 0,
+        "pos": {
+            "x": 0,
+            "y": 0
+        },
+        "priority": 1,
+        "rgbrange": 0,
+        "rotation": 1,
+        "scale": 1,
+        "vrrpolicy": 2
+    }
+]
