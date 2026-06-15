@@ -1,9 +1,0 @@
-[Applications][google-chrome]
-Seen=true
-
-[Applications][slack]
-Seen=true
-
-[Notifications]
-PopupPosition=BottomLeft
-PopupTimeout=7000

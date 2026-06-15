@@ -1,8 +1,7 @@
 .PHONY: setup symlinks zshrc tmux gitconfig p10k dircolors wezterm \
        zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
        zsh-syntax-highlighting zsh-history-substring-search fzf \
-       terminal-bling neovim nvimrc packages apt docker help bat-themes bin \
-       kde kde-export
+       terminal-bling neovim nvimrc packages apt docker help bat-themes bin
 
 ############################################################
 # Default target: show available targets
@@ -16,8 +15,6 @@ help:
 	@echo "  terminal-bling Install eza, bat, delta, lolcat, k8s tools (needs sudo)"
 	@echo "  neovim         Install neovim + NvChad + config symlink"
 	@echo "  packages       Install base apt packages + docker"
-	@echo "  kde            Install Plasma + restore KDE config snapshot (see kde/KDE-SETUP.md)"
-	@echo "  kde-export     Refresh the KDE config snapshot from this machine"
 	@echo ""
 
 ############################################################
@@ -109,16 +106,6 @@ neovim:
 	@command -v nvim >/dev/null || (wget -q https://github.com/neovim/neovim/releases/download/stable/nvim.appimage -O /tmp/nvim.appimage && chmod u+x /tmp/nvim.appimage && sudo mv /tmp/nvim.appimage /usr/local/bin/nvim)
 	@[ -d $(HOME)/.config/nvim/.git ] || git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
 	@$(MAKE) nvimrc
-
-############################################################
-# KDE Plasma replication (manual, not part of setup)
-# See kde/KDE-SETUP.md for the full procedure.
-############################################################
-kde:
-	@$(CURDIR)/kde/setup.sh
-
-kde-export:
-	@$(CURDIR)/kde/export.sh
 
 ############################################################
 # Base packages + docker (manual, needs sudo)

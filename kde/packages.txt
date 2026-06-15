@@ -1,5 +1,0 @@
-kde-plasma-desktop
-sddm
-konsole
-dolphin
-kde-spectacle
