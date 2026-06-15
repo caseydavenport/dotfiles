@@ -67,6 +67,15 @@ vim.api.nvim_create_autocmd({ "BufWritePre" }, {
 -- Language servers and diagnostics
 ---------------------------------------------------------------
 
+-- Connect to the shared gopls daemon when it's running so nvim shares one cache
+-- with Claude Code etc. Falls back to a local gopls when the socket isn't there.
+local gopls_sock = (vim.env.XDG_RUNTIME_DIR or "") .. "/gopls.sock"
+if vim.uv.fs_stat(gopls_sock) then
+  vim.lsp.config("gopls", {
+    cmd = { "gopls", "-remote=unix;" .. gopls_sock, "-logfile=auto" },
+  })
+end
+
 vim.lsp.enable("gopls")
 
 -- Show diagnostic text inline, not as virtual lines.

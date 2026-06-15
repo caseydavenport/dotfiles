@@ -232,6 +232,13 @@ let g:go_build_tags = 'fvtests'
 " https://github.com/mvdan/gofumpt
 let g:go_gopls_gofumpt=1
 
+" Point vim-go's gopls at the shared daemon when it's running, so we share one
+" cache with Claude Code instead of spawning our own. Falls back to a local
+" gopls when the socket isn't there (daemon isn't set up on every machine).
+if !empty($XDG_RUNTIME_DIR) && getftype($XDG_RUNTIME_DIR . '/gopls.sock') ==# 'socket'
+  let g:go_gopls_options = ['-remote=unix;' . $XDG_RUNTIME_DIR . '/gopls.sock']
+endif
+
 " Prevent auto-indent on colon (cindent treats : as a C label)
 set indentkeys-=:
 

@@ -14,6 +14,11 @@ local plugins = {
       vim.g.go_highlight_build_constraints = 1
       vim.g.go_def_mode = 'gopls'
       vim.g.go_info_mode = 'gopls'
+      -- Share the gopls daemon when it's up (matches the LSP config in init.lua).
+      local gopls_sock = (vim.env.XDG_RUNTIME_DIR or "") .. "/gopls.sock"
+      if vim.uv.fs_stat(gopls_sock) then
+        vim.g.go_gopls_options = { '-remote=unix;' .. gopls_sock }
+      end
     end
   },
   {
