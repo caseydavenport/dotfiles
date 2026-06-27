@@ -382,5 +382,40 @@ local plugins = {
       return opts
     end,
   },
+  ---------------------------------------------------------------
+  -- Python REPL (iron.nvim) + notebook editing (jupytext.nvim)
+  ---------------------------------------------------------------
+  {
+    -- Send code to an IPython REPL split.
+    "Vigemus/iron.nvim",
+    ft = "python",
+    config = function()
+      local iron = require("iron.core")
+      iron.setup({
+        config = {
+          repl_definition = {
+            python = {
+              command = { "ipython", "--no-autoindent" },
+              format = require("iron.fts.common").bracketed_paste,
+            },
+          },
+          repl_open_cmd = require("iron.view").split.vertical.botright(0.4),
+        },
+        -- We define our own keymaps in init.lua; leave iron's defaults off.
+        keymaps = {},
+        ignore_blank_lines = true,
+      })
+    end,
+  },
+  {
+    -- Open .ipynb notebooks as editable text (round-trips on save).
+    "GCBallesteros/jupytext.nvim",
+    lazy = false,
+    opts = {
+      style = "markdown",
+      output_extension = "md",
+      force_ft = "markdown",
+    },
+  },
 }
 return plugins

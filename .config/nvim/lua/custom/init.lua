@@ -155,6 +155,10 @@ vim.api.nvim_create_autocmd("User", {
         -- Python bindings.
         { "<leader>Pv", desc = "Select venv" },
         { "<leader>Pi", desc = "Toggle inlay hints" },
+        { "<leader>Pr", desc = "Open/restart REPL" },
+        { "<leader>Pl", desc = "Send line to REPL" },
+        { "<leader>Pf", desc = "Send file to REPL" },
+        { "<leader>Pq", desc = "Exit REPL" },
 
         -- Gitsigns bindings.
         { "<leader>p", group = "Git preview", icon = "" },
@@ -365,6 +369,16 @@ vim.keymap.set("n", "<leader>Pi", function()
   local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = 0 })
   vim.lsp.inlay_hint.enable(not enabled, { bufnr = 0 })
 end, { desc = "Toggle inlay hints" })
+
+---------------------------------------------------------------
+-- Python REPL (iron.nvim)
+---------------------------------------------------------------
+
+vim.keymap.set("n", "<leader>Pr", function() require("iron.core").repl_for("python") end, { desc = "Open/restart REPL" })
+vim.keymap.set("n", "<leader>Pl", function() require("iron.core").send_line() end, { desc = "Send line to REPL" })
+vim.keymap.set("x", "<leader>Ps", function() require("iron.core").visual_send() end, { desc = "Send selection to REPL" })
+vim.keymap.set("n", "<leader>Pf", function() require("iron.core").send_file() end, { desc = "Send file to REPL" })
+vim.keymap.set("n", "<leader>Pq", function() require("iron.core").close_repl() end, { desc = "Exit REPL" })
 
 ---------------------------------------------------------------
 -- Tests (vim-test: go + python)
