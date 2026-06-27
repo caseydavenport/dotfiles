@@ -124,6 +124,7 @@ vim.api.nvim_create_autocmd("User", {
         { "<leader>q", group = "Sessions", icon = "󰆓" },
         { "<leader>r", group = "Review", icon = "" },
         { "<leader>x", group = "Diagnostics", icon = "" },
+        { "<leader>P", group = "Python", icon = "" },
 
         -- NvChad telescope bindings with descriptions.
         { "<leader>ff", desc = "Find files" },
@@ -148,6 +149,10 @@ vim.api.nvim_create_autocmd("User", {
         { "<leader>ma", hidden = true },
         { "<leader>th", hidden = true },
         { "<leader>c", hidden = true },
+
+        -- Python bindings.
+        { "<leader>Pv", desc = "Select venv" },
+        { "<leader>Pi", desc = "Toggle inlay hints" },
 
         -- Gitsigns bindings.
         { "<leader>p", group = "Git preview", icon = "" },
@@ -330,6 +335,12 @@ vim.keymap.set("n", "<leader>dO", function() require("dap").step_out() end, { de
 vim.keymap.set("n", "<leader>dr", function() require("dap").repl.open() end, { desc = "Debug REPL" })
 vim.keymap.set("n", "<leader>dt", function() require("dap-go").debug_test() end, { desc = "Debug nearest Go test" })
 vim.keymap.set("n", "<leader>du", function() require("dapui").toggle() end, { desc = "Toggle debug UI" })
+
+---------------------------------------------------------------
+-- Python: venv selection
+---------------------------------------------------------------
+
+vim.keymap.set("n", "<leader>Pv", "<cmd>VenvSelect<cr>", { desc = "Select venv" })
 
 ---------------------------------------------------------------
 -- Inlay hints toggle (LSP, used mainly for Python/basedpyright)
