@@ -8,7 +8,7 @@ basedpyright + ruff, venv-aware, with pytest, debugging, and an IPython REPL. Ke
 make python-tools
 ```
 
-Installs `basedpyright`, `ruff`, `ipython`, and `jupytext` via pipx. `make neovim` runs this too. Needs `~/.local/bin` on PATH (`pipx ensurepath`).
+Installs `basedpyright`, `ruff`, `ipython`, and `jupytext` via pipx, plus `fd` (apt `fd-find`) for the venv picker. `make neovim` runs this too. Needs `~/.local/bin` on PATH (`pipx ensurepath`).
 
 ## Virtualenvs
 
@@ -35,3 +35,4 @@ nvim-dap-python wraps debugpy. Install debugpy into the project venv (`pip insta
 - **LSP not attaching:** `:LspInfo` should list basedpyright and ruff. If not, check `make python-tools` ran and the binaries are on PATH.
 - **Wrong imports flagged:** usually the wrong interpreter - `<leader>Pv` and pick the project venv.
 - **Not formatting/sorting on save:** it's conform.nvim calling ruff (`custom/configs/python.lua` registers the LSP, `custom/plugins.lua` has the conform spec). Make sure `ruff` is on PATH; conform is lazy-loaded on the `python` filetype.
+- **`<leader>Pv` missing or fd error on `.py` open:** venv-selector needs the `fd` binary. On Debian/Ubuntu it's `fdfind` (`sudo apt install fd-find`), which `make python-tools` installs; the config points venv-selector at `fdfind`.

@@ -316,8 +316,11 @@ local plugins = {
   ---------------------------------------------------------------
   {
     -- Pick a virtualenv / conda env; restarts the python LSPs against it.
+    -- Tracks the default branch: the old "regexp" branch was merged back into
+    -- main, and pinning it now throws an error on every python buffer open.
+    -- The current main needs the fd binary to search for envs; on Debian/Ubuntu
+    -- fd ships as "fdfind" (make python-tools installs it via apt).
     "linux-cultist/venv-selector.nvim",
-    branch = "regexp",
     dependencies = {
       "neovim/nvim-lspconfig",
       "nvim-telescope/telescope.nvim",
@@ -329,6 +332,7 @@ local plugins = {
       settings = {
         options = {
           notify_user_on_venv_activation = true,
+          fd_binary_name = "fdfind",
         },
       },
     },

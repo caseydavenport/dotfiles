@@ -119,7 +119,8 @@ python-tools:
 	@command -v ruff >/dev/null || pipx install ruff
 	@command -v ipython >/dev/null || pipx install ipython
 	@command -v jupytext >/dev/null || pipx install jupytext
-	@echo "Python toolchain ready: basedpyright, ruff, ipython, jupytext"
+	@command -v fdfind >/dev/null || command -v fd >/dev/null || sudo apt install -y fd-find
+	@echo "Python toolchain ready: basedpyright, ruff, ipython, jupytext, fd"
 
 ############################################################
 # Base packages + docker (manual, needs sudo)
