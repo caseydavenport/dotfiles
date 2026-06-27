@@ -391,5 +391,6 @@ vim.keymap.set("n", "<leader>tl", "<cmd>TestLast<cr>", { desc = "Test last" })
 vim.keymap.set("n", "<leader>tv", "<cmd>TestVisit<cr>", { desc = "Test visit" })
 
 -- Moved gitsigns toggle-deleted off <leader>td so <leader>t is the Test group.
+-- The actual <leader>td unbind happens in the LazyDone autocmd above, after
+-- gitsigns' on_attach has bound it.
 vim.keymap.set("n", "<leader>pd", function() require("gitsigns").toggle_deleted() end, { desc = "Toggle deleted lines" })
-pcall(vim.keymap.del, "n", "<leader>td")
