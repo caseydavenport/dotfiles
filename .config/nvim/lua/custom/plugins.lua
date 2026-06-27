@@ -359,6 +359,15 @@ local plugins = {
           dap.listeners.before.event_exited["dapui_config"] = function() dapui.close() end
         end,
       },
+      -- Python debug adapter using debugpy (resolved from the active venv).
+      {
+        "mfussenegger/nvim-dap-python",
+        config = function()
+          -- Use the python on PATH (venv-selector updates this when a venv
+          -- is activated); falls back to system python3.
+          require("dap-python").setup(vim.fn.exepath("python3"))
+        end,
+      },
     },
   },
   ---------------------------------------------------------------
