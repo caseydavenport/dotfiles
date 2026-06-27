@@ -1,6 +1,6 @@
 # Neovim Cheatsheet
 
-NvChad + Catppuccin Mocha + custom plugins for Go development.
+NvChad + Catppuccin Mocha + custom plugins for Go and Python development.
 
 ## Keybindings
 
@@ -43,7 +43,6 @@ NvChad's leader key is `Space`. Press it and wait to see which-key groups with i
 | `<leader>ds` | Go to definition in horizontal split |
 | `<leader>dv` | Go to definition in vertical split |
 | `<leader>gi` | Go to implementations |
-| `<leader>T` | Run nearest test |
 | `:A` | Switch between `.go` and `_test.go` |
 | `gJ` | Join struct fields to one line (splitjoin) |
 | `gS` | Split struct fields to multiple lines (splitjoin) |
@@ -60,8 +59,34 @@ NvChad's leader key is `Space`. Press it and wait to see which-key groups with i
 | `<leader>di` | Step into |
 | `<leader>dO` | Step out |
 | `<leader>dr` | Open debug REPL |
-| `<leader>dt` | Debug nearest Go test |
+| `<leader>dt` | Debug nearest test (Go or Python, by filetype) |
 | `<leader>du` | Toggle debug UI panel |
+
+### Python development
+
+| Key | Action |
+|-----|--------|
+| `<leader>Pv` | Select virtualenv / conda env |
+| `<leader>Pi` | Toggle inlay hints (types) |
+| `<leader>Pr` | Open/restart IPython REPL |
+| `<leader>Pl` | Send line to REPL |
+| `<leader>Ps` | Send selection to REPL (visual mode) |
+| `<leader>Pf` | Send file to REPL |
+| `<leader>Pq` | Exit REPL |
+
+LSP is basedpyright (types/nav) + ruff (lint/format). Imports get sorted and the buffer gets ruff-formatted on save. See [PYTHON.md](PYTHON.md) for setup and workflow.
+
+### Tests (Go + Python)
+
+| Key | Action |
+|-----|--------|
+| `<leader>tn` / `<leader>T` | Test nearest |
+| `<leader>tf` | Test file |
+| `<leader>ts` | Test suite |
+| `<leader>tl` | Test last |
+| `<leader>tv` | Open file under test |
+
+Runs in a neovim terminal split. Go uses `go test`, Python uses pytest from the active venv.
 
 ### Diagnostics
 
@@ -82,7 +107,7 @@ NvChad's leader key is `Space`. Press it and wait to see which-key groups with i
 | `<leader>gbl` | Blame current line |
 | `<leader>gbr` | Open current file on GitHub |
 | `<leader>ph` | Preview git hunk |
-| `<leader>td` | Toggle showing deleted lines |
+| `<leader>pd` | Toggle showing deleted lines |
 | `[c` / `]c` | Previous/next git hunk |
 
 ### Octo (PR review)
@@ -140,7 +165,9 @@ Press `<leader>` to see these organized groups:
 -  **Diagnostics** — Trouble panel, quickfix
 -  **Find** — All telescope search bindings
 -  **Go / Git** — Go tools, coverage, git status/commits/blame
--  **Git preview** — Hunk preview, deleted lines
+-  **Python** — venv, inlay hints, REPL (`<leader>P`)
+-  **Test** — nearest/file/suite/last, Go and Python (`<leader>t`)
+-  **Git preview** — Hunk preview, deleted lines (`<leader>p`)
 - 󰆓 **Sessions** — Save/restore project sessions
 -  **Review** — Octo PR review
 -  **Workspace** — LSP workspace folders
@@ -148,8 +175,13 @@ Press `<leader>` to see these organized groups:
 ## Plugins
 
 - **vim-go** -- Go highlighting, formatting (gofumpt), gopls integration
-- **nvim-lspconfig** -- LSP support (gopls enabled)
-- **nvim-dap + nvim-dap-go + nvim-dap-ui** -- Debugger with breakpoints, stepping, variable inspection
+- **nvim-lspconfig** -- LSP support (gopls, basedpyright, ruff enabled)
+- **basedpyright + ruff** -- Python LSP: types/nav (basedpyright) and lint/format (ruff)
+- **conform.nvim** -- Python import-sort + ruff format on save
+- **venv-selector.nvim** -- Pick a virtualenv/conda env, restarts the Python LSPs against it
+- **iron.nvim** -- Send code to an IPython REPL split
+- **jupytext.nvim** -- Open `.ipynb` notebooks as editable text
+- **nvim-dap + nvim-dap-go + nvim-dap-python + nvim-dap-ui** -- Debugger (Go via delve, Python via debugpy) with breakpoints, stepping, variable inspection
 - **flash.nvim** -- Jump to any visible character in 2 keystrokes
 - **vim-tmux-navigator** -- Seamless Alt+h/j/k/l across vim splits and tmux panes
 - **copilot + CopilotChat** -- AI completions and chat
@@ -164,14 +196,14 @@ Press `<leader>` to see these organized groups:
 - **nvim-goc** -- Go test coverage overlay
 - **splitjoin** -- Split/join struct fields
 - **vim-delve** -- Go debugger (legacy, nvim-dap preferred)
-- **vim-test** -- Run tests from vim
+- **vim-test** -- Run tests from vim (Go and Python/pytest)
 - **nvim-tree** -- File tree (adaptive size)
 - **markdown-preview** -- Live markdown preview in browser
 - **LuaSnip** -- Custom snippets
 
 ## Editor settings
 
-- Line ruler at column 160
+- Line ruler at column 160 (88 in Python buffers, per ruff/PEP8)
 - No swap files
 - Restores cursor position on file reopen
 - Trims trailing whitespace on save

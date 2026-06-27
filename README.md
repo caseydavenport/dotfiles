@@ -31,6 +31,7 @@ make help           # List all targets
 - **zsh** -- oh-my-zsh + powerlevel10k, kubectl/docker completions, history substring search, fzf with bat/eza previews
 - **tmux** -- Powerline status bar with k8s context, sync-panes indicator, true color + undercurl
 - **git** -- delta for side-by-side syntax-highlighted diffs
+- **neovim** -- NvChad + Catppuccin, tuned for Go and Python (LSP, format-on-save, debugging, tests). See [VIM.md](VIM.md), [GO.md](GO.md), [PYTHON.md](PYTHON.md)
 - **CLI tools** -- eza, bat, delta, lolcat, kubectx, kubens, k9s, stern, kubectl-tree, kubectl-neat
 
 See [TERMINAL-BLING.md](TERMINAL-BLING.md) for the full cheatsheet.
