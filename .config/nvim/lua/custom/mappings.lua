@@ -6,7 +6,7 @@
      ["<Leader>ds"] = { "<Plug>(go-def-split)" },
      ["<Leader>dv"] = { "<Plug>(go-def-vertical)" },
      ["<Leader>gi"] = { "<Plug>(go-implements)" },
-     ["<Leader>T"] = { ":TestNearest" },
+     ["<Leader>T"] = { "<cmd>TestNearest<cr>", "Test nearest" },
 
      -- Override NvChad terminal toggles, free Alt+h for tmux navigation.
      -- Override NvChad Alt+h, free it for tmux navigation.

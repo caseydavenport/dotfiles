@@ -99,7 +99,7 @@ local plugins = {
   },
   {
     "vim-test/vim-test",
-    ft = 'go',
+    ft = { "go", "python" },
     config = function(_)
     end
   },

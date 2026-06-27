@@ -89,6 +89,8 @@ end, 100)
 
 -- Run tests in a neovim terminal split.
 vim.g['test#strategy'] = "neovim"
+-- Use pytest for python test running.
+vim.g['test#python#runner'] = 'pytest'
 
 ---------------------------------------------------------------
 -- Which-key group labels
@@ -157,7 +159,13 @@ vim.api.nvim_create_autocmd("User", {
         -- Gitsigns bindings.
         { "<leader>p", group = "Git preview", icon = "" },
         { "<leader>ph", desc = "Preview hunk" },
-        { "<leader>td", desc = "Toggle deleted lines" },
+        { "<leader>pd", desc = "Toggle deleted lines" },
+        { "<leader>t", group = "Test", icon = "" },
+        { "<leader>tn", desc = "Test nearest" },
+        { "<leader>tf", desc = "Test file" },
+        { "<leader>ts", desc = "Test suite" },
+        { "<leader>tl", desc = "Test last" },
+        { "<leader>tv", desc = "Test visit" },
 
         -- LSP workspace bindings.
         { "<leader>w", group = "Workspace", icon = "" },
@@ -176,6 +184,7 @@ vim.api.nvim_create_autocmd("User", {
       -- Unbind things we don't use.
       pcall(vim.keymap.del, "n", "<leader>ma")
       pcall(vim.keymap.del, "n", "<leader>th")
+      pcall(vim.keymap.del, "n", "<leader>td")
       pcall(vim.keymap.del, "n", "<leader>cm")
       pcall(vim.keymap.del, "n", "<leader>vt")
       pcall(vim.keymap.del, "n", "<leader>vb")
@@ -350,3 +359,17 @@ vim.keymap.set("n", "<leader>Pi", function()
   local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = 0 })
   vim.lsp.inlay_hint.enable(not enabled, { bufnr = 0 })
 end, { desc = "Toggle inlay hints" })
+
+---------------------------------------------------------------
+-- Tests (vim-test: go + python)
+---------------------------------------------------------------
+
+vim.keymap.set("n", "<leader>tn", "<cmd>TestNearest<cr>", { desc = "Test nearest" })
+vim.keymap.set("n", "<leader>tf", "<cmd>TestFile<cr>", { desc = "Test file" })
+vim.keymap.set("n", "<leader>ts", "<cmd>TestSuite<cr>", { desc = "Test suite" })
+vim.keymap.set("n", "<leader>tl", "<cmd>TestLast<cr>", { desc = "Test last" })
+vim.keymap.set("n", "<leader>tv", "<cmd>TestVisit<cr>", { desc = "Test visit" })
+
+-- Moved gitsigns toggle-deleted off <leader>td so <leader>t is the Test group.
+vim.keymap.set("n", "<leader>pd", function() require("gitsigns").toggle_deleted() end, { desc = "Toggle deleted lines" })
+pcall(vim.keymap.del, "n", "<leader>td")
