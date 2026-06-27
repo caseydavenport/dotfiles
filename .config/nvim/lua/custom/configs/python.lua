@@ -32,3 +32,16 @@ vim.lsp.config("ruff", {
 })
 
 vim.lsp.enable({ "basedpyright", "ruff" })
+
+---------------------------------------------------------------
+-- Format + organize imports on save
+--
+-- Driven by conform.nvim (stevearc/conform.nvim) configured in
+-- plugins.lua with formatters_by_ft.python = { "ruff_organize_imports",
+-- "ruff_format" } and format_on_save. conform runs both steps
+-- synchronously before the buffer hits disk.
+--
+-- The native vim.lsp organizeImports path was attempted first but
+-- did not reorder imports in headless verification on nvim 0.11;
+-- conform is the reliable fallback.
+---------------------------------------------------------------

@@ -294,6 +294,24 @@ local plugins = {
     end,
   },
   ---------------------------------------------------------------
+  -- Python formatting (ruff import sort + ruff format on save)
+  ---------------------------------------------------------------
+  {
+    "stevearc/conform.nvim",
+    ft = "python",
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          python = { "ruff_organize_imports", "ruff_format" },
+        },
+        format_on_save = {
+          timeout_ms = 3000,
+          lsp_fallback = false,
+        },
+      })
+    end,
+  },
+  ---------------------------------------------------------------
   -- Debug adapter (nvim-dap + Go support)
   ---------------------------------------------------------------
   {
