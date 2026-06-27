@@ -45,3 +45,16 @@ vim.lsp.enable({ "basedpyright", "ruff" })
 -- did not reorder imports in headless verification on nvim 0.11;
 -- conform is the reliable fallback.
 ---------------------------------------------------------------
+
+---------------------------------------------------------------
+-- Python buffer polish
+---------------------------------------------------------------
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "python",
+  desc = "Python buffer-local settings",
+  callback = function()
+    -- ruff/PEP8 line length, not the global 160.
+    vim.opt_local.colorcolumn = "88"
+  end,
+})

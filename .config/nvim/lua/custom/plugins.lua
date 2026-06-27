@@ -339,5 +339,17 @@ local plugins = {
       },
     },
   },
+  ---------------------------------------------------------------
+  -- Treesitter parser overrides
+  ---------------------------------------------------------------
+  {
+    -- Ensure the python treesitter parser is installed.
+    "nvim-treesitter/nvim-treesitter",
+    opts = function(_, opts)
+      opts.ensure_installed = opts.ensure_installed or {}
+      vim.list_extend(opts.ensure_installed, { "python", "toml" })
+      return opts
+    end,
+  },
 }
 return plugins

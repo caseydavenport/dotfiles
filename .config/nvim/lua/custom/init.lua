@@ -330,3 +330,12 @@ vim.keymap.set("n", "<leader>dO", function() require("dap").step_out() end, { de
 vim.keymap.set("n", "<leader>dr", function() require("dap").repl.open() end, { desc = "Debug REPL" })
 vim.keymap.set("n", "<leader>dt", function() require("dap-go").debug_test() end, { desc = "Debug nearest Go test" })
 vim.keymap.set("n", "<leader>du", function() require("dapui").toggle() end, { desc = "Toggle debug UI" })
+
+---------------------------------------------------------------
+-- Inlay hints toggle (LSP, used mainly for Python/basedpyright)
+---------------------------------------------------------------
+
+vim.keymap.set("n", "<leader>Pi", function()
+  local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = 0 })
+  vim.lsp.inlay_hint.enable(not enabled, { bufnr = 0 })
+end, { desc = "Toggle inlay hints" })
