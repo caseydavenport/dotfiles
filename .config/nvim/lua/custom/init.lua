@@ -78,6 +78,9 @@ end
 
 vim.lsp.enable("gopls")
 
+-- Python language servers (basedpyright + ruff). See custom/configs/python.lua.
+require("custom.configs.python")
+
 -- Show diagnostic text inline, not as virtual lines.
 -- Set after a short defer to ensure it runs after any plugin overrides.
 vim.defer_fn(function()
