@@ -1,7 +1,8 @@
 .PHONY: setup symlinks zshrc tmux gitconfig p10k dircolors wezterm \
        zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
        zsh-syntax-highlighting zsh-history-substring-search fzf \
-       terminal-bling neovim nvimrc packages apt docker help bat-themes bin
+       terminal-bling neovim nvimrc packages apt docker help bat-themes bin \
+       python-tools
 
 ############################################################
 # Default target: show available targets
@@ -14,6 +15,7 @@ help:
 	@echo "  zsh-addons     Install oh-my-zsh, plugins, p10k, fzf"
 	@echo "  terminal-bling Install eza, bat, delta, lolcat, k8s tools (needs sudo)"
 	@echo "  neovim         Install neovim + NvChad + config symlink"
+	@echo "  python-tools   Install Python editing toolchain via pipx (basedpyright, ruff, ipython, jupytext)"
 	@echo "  packages       Install base apt packages + docker"
 	@echo ""
 
@@ -106,6 +108,18 @@ neovim:
 	@command -v nvim >/dev/null || (wget -q https://github.com/neovim/neovim/releases/download/stable/nvim.appimage -O /tmp/nvim.appimage && chmod u+x /tmp/nvim.appimage && sudo mv /tmp/nvim.appimage /usr/local/bin/nvim)
 	@[ -d $(HOME)/.config/nvim/.git ] || git clone https://github.com/NvChad/NvChad ~/.config/nvim --depth 1
 	@$(MAKE) nvimrc
+	@$(MAKE) python-tools
+
+############################################################
+# Python editing toolchain (pipx-installed, idempotent)
+############################################################
+python-tools:
+	@command -v pipx >/dev/null || (echo ">> pipx not found; install with: sudo apt install pipx" && exit 1)
+	@command -v basedpyright-langserver >/dev/null || pipx install basedpyright
+	@command -v ruff >/dev/null || pipx install ruff
+	@command -v ipython >/dev/null || pipx install ipython
+	@command -v jupytext >/dev/null || pipx install jupytext
+	@echo "Python toolchain ready: basedpyright, ruff, ipython, jupytext"
 
 ############################################################
 # Base packages + docker (manual, needs sudo)
