@@ -43,6 +43,23 @@ table.insert(config.hyperlink_rules, {
   highlight = 1,
 })
 
+-- ============ mouse ============
+-- Auto-copy on select. Finishing a drag puts the selection on both the
+-- clipboard and the X11 primary, so Ctrl+Shift+V and middle-click both work.
+config.mouse_bindings = {
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = wezterm.action.CompleteSelection 'ClipboardAndPrimarySelection',
+  },
+  -- Ctrl+click still opens hyperlinks (override drops the default, so re-add it).
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    action = wezterm.action.OpenLinkAtMouseCursor,
+  },
+}
+
 -- ============ keybinds ============
 -- Keep it minimal so tmux owns most chords.
 config.keys = {
