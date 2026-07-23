@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Emit a WEZTERM_NOTIFY user var so WezTerm's user-var-changed handler (see
+# .config/wezterm/wezterm.lua) can toast when its window is unfocused. Writes
+# the OSC 1337 SetUserVar escape straight to the controlling terminal, so it's
+# invisible to whatever's drawing the screen (a TUI, Claude Code, etc). Inside
+# tmux it's wrapped in the passthrough sequence, which needs "allow-passthrough
+# on" (see .tmux.conf).
+#
+# Usage: wezterm-notify "message text"
+set -uo pipefail
+
+msg="${1:-Command finished}"
+
+# Need base64 to encode the payload and a controlling terminal to write to.
+# With neither (cron, no tty) there's nothing to do, so exit clean rather than
+# erroring - this runs from a Claude Code Stop hook that fires every turn.
+command -v base64 >/dev/null 2>&1 || exit 0
+{ exec 3>/dev/tty; } 2>/dev/null || exit 0
+
+b64=$(printf '%s' "$msg" | base64 | tr -d '\n')
+
+if [ -z "${TMUX:-}" ]; then
+  printf '\033]1337;SetUserVar=WEZTERM_NOTIFY=%s\007' "$b64" >&3
+else
+  printf '\033Ptmux;\033\033]1337;SetUserVar=WEZTERM_NOTIFY=%s\007\033\\' "$b64" >&3
+fi
+
+exec 3>&-
