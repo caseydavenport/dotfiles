@@ -94,3 +94,14 @@ Consistent palette across all tools:
 - `prefix + H/J/K/L` — resize panes by 5 cells
 - `prefix + Ctrl+arrow` — resize panes by 1 cell
 - Transient prompt (p10k) — old prompts collapse, reappears on `cd`
+- `prefix + [` then `{` / `}` — jump to previous/next shell prompt in copy mode (uses OSC 133 marks from wezterm.sh)
+
+## WezTerm
+
+Thin frame around tmux, but a few things tmux can't do:
+
+- Auto-copy on mouse select — finishing a drag copies to clipboard and X11 primary (middle-click paste works)
+- `Ctrl+Shift+Space` — QuickSelect: labels on-screen matches, type the hint to copy. Matches git SHAs, IPv4 (+CIDR/port), pod names, URLs, email
+- `Ctrl+Shift+click` — select and copy a whole command's output as one block (bare WezTerm only, needs OSC 133)
+- `Ctrl+Shift+Up/Down` — jump to previous/next prompt (bare WezTerm only; inside tmux use the copy-mode binding above)
+- `Ctrl+click` — open a URL or `file:line:col` hyperlink

@@ -312,6 +312,13 @@ if [ -f '/home/linuxbrew/.linuxbrew/bin/brew' ]; then eval "$(/home/linuxbrew/.l
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
 
+# WezTerm shell integration: OSC 133 semantic prompts + OSC 7 cwd.
+# Ubuntu's zsh never sources /etc/profile.d, so pull it in here. Only
+# registers zsh hooks (no output at load), so p10k instant prompt is fine.
+# Inside tmux this feeds tmux's own previous-prompt/next-prompt (see .tmux.conf);
+# in bare WezTerm it drives ScrollToPrompt + select-command-output.
+[[ -r /etc/profile.d/wezterm.sh ]] && source /etc/profile.d/wezterm.sh
+
 # Catppuccin Mocha dircolors (ls/eza file colors)
 [ -f ~/.dircolors ] && eval "$(dircolors -b ~/.dircolors)"
 
