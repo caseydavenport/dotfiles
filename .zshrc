@@ -256,7 +256,8 @@ setopt auto_cd
 cdpath=($HOME/repos $GOPATH $GOPATH/src/github.com/ $GOPATH/src/github.com/tigera $GOPATH/src/k8s.io)
 
 # Source local token / env files if they exist.
-[ -f ~/.github_token ] && source ~/.github_token
+# GITHUB_TOKEN comes straight from gh so it's always current (no stale snapshot to refresh).
+command -v gh >/dev/null && export GITHUB_TOKEN="$(gh auth token 2>/dev/null)"
 [ -f ~/.semaphore_token ] && source ~/.semaphore_token
 [ -f ~/.npm_token ] && source ~/.npm_token
 [ -f ~/.cherry_pick_config ] && source ~/.cherry_pick_config
@@ -327,3 +328,6 @@ alias tm-side='tmux new-session -A -s side'
 
 # If there is a local env file, source it.
 [ -f ~/.casey.customenv ] && source ~/.casey.customenv
+
+# opencode
+export PATH=/home/casey/.opencode/bin:$PATH
