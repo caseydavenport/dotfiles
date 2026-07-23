@@ -19,6 +19,12 @@ config.use_fancy_tab_bar = false
 config.window_decorations = 'RESIZE'  -- thin borders, no title bar
 config.window_padding = { left = 4, right = 4, top = 2, bottom = 2 }
 
+-- ============ rendering ============
+-- WebGpu (Vulkan/GL via wgpu) over the default OpenGL front end: lower-latency,
+-- smoother scrolling, and it offloads to the GPU. Falls back to software if no
+-- GPU is available.
+config.front_end = 'WebGpu'
+
 -- ============ behaviour ============
 config.scrollback_lines = 50000
 config.enable_scroll_bar = false
@@ -110,6 +116,17 @@ config.keys = {
   -- Fullscreen toggle (WezTerm's default is Alt+Enter; add F11 to match other apps)
   { key = 'F11', action = wezterm.action.ToggleFullScreen },
 }
+
+-- ============ notifications ============
+-- Toast when a long command finishes in an unfocused window. The shell (see
+-- .zshrc) sets WEZTERM_NOTIFY once a command passes the threshold; we only
+-- toast when this window isn't focused, so it stays quiet while you're watching
+-- the terminal. The user var reaches us through tmux via allow-passthrough.
+wezterm.on('user-var-changed', function(window, pane, name, value)
+  if name == 'WEZTERM_NOTIFY' and not window:is_focused() then
+    window:toast_notification('WezTerm', value, nil, 5000)
+  end
+end)
 
 -- ============ window class for KWin rules ============
 -- So KWin rules can target WezTerm separately from Konsole/GNOME Terminal.

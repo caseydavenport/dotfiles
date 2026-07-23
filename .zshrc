@@ -319,6 +319,29 @@ POWERLEVEL9K_DISABLE_CONFIGURATION_WIZARD=true
 # in bare WezTerm it drives ScrollToPrompt + select-command-output.
 [[ -r /etc/profile.d/wezterm.sh ]] && source /etc/profile.d/wezterm.sh
 
+# Notify (via WezTerm) when a long foreground command finishes. preexec stamps
+# the start time and command; precmd emits the WEZTERM_NOTIFY user var when it
+# ran past the threshold. WezTerm's user-var-changed handler only toasts when
+# its window is unfocused, so this stays quiet while you're watching the
+# terminal. Reaches WezTerm through tmux via allow-passthrough (see .tmux.conf).
+if typeset -f __wezterm_set_user_var >/dev/null; then
+  typeset -g _wt_notify_threshold=90
+  typeset -g _wt_cmd_start=
+  typeset -g _wt_cmd=
+  _wt_notify_preexec() { _wt_cmd_start=$SECONDS; _wt_cmd=$1 }
+  _wt_notify_precmd() {
+    [[ -z "$_wt_cmd_start" ]] && return
+    local elapsed=$(( SECONDS - _wt_cmd_start ))
+    local cmd=${_wt_cmd:0:80}
+    _wt_cmd_start= _wt_cmd=
+    (( elapsed >= _wt_notify_threshold )) &&
+      __wezterm_set_user_var WEZTERM_NOTIFY "\"${cmd}\" finished after ${elapsed}s"
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook preexec _wt_notify_preexec
+  add-zsh-hook precmd _wt_notify_precmd
+fi
+
 # Catppuccin Mocha dircolors (ls/eza file colors)
 [ -f ~/.dircolors ] && eval "$(dircolors -b ~/.dircolors)"
 
