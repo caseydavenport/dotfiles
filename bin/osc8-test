@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Print an OSC 8 hyperlink. If the terminal (and tmux, if present) supports it,
+# "PR #12888" renders underlined and ctrl-click opens the URL.
+url="https://github.com/projectcalico/calico/pull/12888"
+printf 'OSC 8 link: \e]8;;%s\e\\PR #12888\e]8;;\e\\\n' "$url"
+printf 'Plain URL:  %s\n' "$url"
+
+if [ -n "$TMUX" ]; then
+	printf '\ntmux features: %s\n' "$(tmux display -p '#{client_termfeatures}')"
+fi
