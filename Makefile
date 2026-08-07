@@ -1,4 +1,4 @@
-.PHONY: setup symlinks zshrc tmux gitconfig p10k dircolors wezterm \
+.PHONY: setup symlinks zshrc tmux tpm gitconfig p10k dircolors wezterm \
        zsh-addons oh-my-zsh powerlevel10k zsh-autosuggestions \
        zsh-syntax-highlighting zsh-history-substring-search fzf \
        terminal-bling neovim nvimrc packages apt docker help bat-themes bin \
@@ -29,13 +29,20 @@ setup: symlinks zsh-addons terminal-bling
 ############################################################
 # Symlink config files into place
 ############################################################
-symlinks: zshrc tmux gitconfig p10k dircolors delta bat-themes bin wezterm
+symlinks: zshrc tmux tpm gitconfig p10k dircolors delta bat-themes bin wezterm
 
 zshrc:
 	ln -sf $(CURDIR)/.zshrc ${HOME}/.zshrc
 
 tmux:
 	ln -sf $(CURDIR)/.tmux.conf ${HOME}/.tmux.conf
+
+# TPM plus the plugins declared in .tmux.conf (tmux-resurrect, tmux-continuum).
+tpm: tmux
+	@[ -d $(HOME)/.tmux/plugins/tpm ] || git clone --depth=1 https://github.com/tmux-plugins/tpm $(HOME)/.tmux/plugins/tpm
+	@tmux start-server \; source-file $(HOME)/.tmux.conf
+	@$(HOME)/.tmux/plugins/tpm/bin/install_plugins
+	@tmux source-file $(HOME)/.tmux.conf
 
 gitconfig:
 	ln -sf $(CURDIR)/.gitconfig ${HOME}/.gitconfig
