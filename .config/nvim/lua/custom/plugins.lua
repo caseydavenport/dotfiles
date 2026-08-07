@@ -131,6 +131,20 @@ local plugins = {
     },
     config = function()
       require("custom.prreview").setup()
+
+      -- Mark the current file viewed, then jump to the next unviewed one.
+      require("octo.mappings").mark_viewed_and_next = function()
+        local layout = require("octo.reviews").get_current_layout()
+        if not layout then
+          return
+        end
+        local file = layout:get_current_file()
+        if file and file.viewed_state ~= "VIEWED" then
+          file:toggle_viewed()
+        end
+        layout:select_next_unviewed_file()
+      end
+
       require("octo").setup({
         suppress_missing_scope = {
           projects_v2 = true,
@@ -146,10 +160,21 @@ local plugins = {
             discard_review = { lhs = "<leader>rd", desc = "discard review" },
             next_thread = { lhs = "]t", desc = "next thread" },
             prev_thread = { lhs = "[t", desc = "prev thread" },
-            select_next_entry = { lhs = "]q", desc = "next file" },
-            select_prev_entry = { lhs = "[q", desc = "prev file" },
+            select_next_entry = { lhs = "<Tab>", desc = "next file" },
+            select_prev_entry = { lhs = "<S-Tab>", desc = "prev file" },
+            mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
+            toggle_viewed = { lhs = "<leader>v", desc = "toggle viewed state" },
             focus_files = { lhs = "<leader>e", desc = "focus file panel" },
             toggle_files = { lhs = "<leader>b", desc = "toggle file panel" },
+            close_review_tab = { lhs = "<leader>q", desc = "close review" },
+          },
+          file_panel = {
+            select_next_entry = { lhs = "<Tab>", desc = "next file" },
+            select_prev_entry = { lhs = "<S-Tab>", desc = "prev file" },
+            mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
+            toggle_viewed = { lhs = "<leader>v", desc = "toggle viewed state" },
+            submit_review = { lhs = "<leader>rs", desc = "submit review" },
+            discard_review = { lhs = "<leader>rd", desc = "discard review" },
             close_review_tab = { lhs = "<leader>q", desc = "close review" },
           },
         },

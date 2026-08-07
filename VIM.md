@@ -119,7 +119,11 @@ Runs in a neovim terminal split. Go uses `go test`, Python uses pytest from the 
 | `<leader>cs` | Add review suggestion |
 | `<leader>rs` | Submit review |
 | `<leader>rd` | Discard review |
-| `]q` / `[q` | Next/prev file in review |
+| `<Tab>` / `<S-Tab>` | Next/prev file in review |
+| `<leader><space>` | Mark file viewed, jump to next unviewed |
+| `<leader>v` | Toggle viewed state (no jump) |
+| `]u` / `[u` | Next/prev unviewed file |
+| `<leader>e` / `<leader>b` | Focus / toggle file panel |
 | `<leader>q` | Close review |
 
 ### Sessions
