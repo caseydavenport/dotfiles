@@ -109,6 +109,9 @@ source $ZSH/oh-my-zsh.sh
 export GOPATH=$HOME/repos/gopath
 export GOPRIVATE=github.com/tigera/*
 
+# Cap build parallelism so concurrent builds across worktrees don't oversubscribe the CPU.
+export GOFLAGS=-p=4
+
 # use nvim
 alias vim=nvim
 export EDITOR=nvim
