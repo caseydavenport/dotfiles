@@ -125,8 +125,12 @@ local plugins = {
       "nvim-telescope/telescope.nvim",
       "nvim-tree/nvim-web-devicons",
     },
-    cmd = "Octo",
+    cmd = { "Octo", "ReviewPRs" },
+    keys = {
+      { "<leader>rp", function() require("custom.prreview").picker() end, desc = "Pick a PR to review" },
+    },
     config = function()
+      require("custom.prreview").setup()
       require("octo").setup({
         suppress_missing_scope = {
           projects_v2 = true,
