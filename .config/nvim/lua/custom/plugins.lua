@@ -131,31 +131,7 @@ local plugins = {
     },
     config = function()
       require("custom.prreview").setup()
-
-      -- Mark the current file viewed, then jump to the next unviewed one.
-      require("octo.mappings").mark_viewed_and_next = function()
-        local layout = require("octo.reviews").get_current_layout()
-        if not layout then
-          return
-        end
-        local file = layout:get_current_file()
-        if file and file.viewed_state ~= "VIEWED" then
-          file:toggle_viewed()
-        end
-        layout:select_next_unviewed_file()
-      end
-
-      -- Octo's own open_in_browser can't see a review buffer, so it opens the repo page.
-      require("octo.mappings").open_review_in_browser = function()
-        local review = require("octo.reviews").get_current_review()
-        if not review then
-          return
-        end
-        local host = require("octo.utils").get_remote_host() or "github.com"
-        local pr = review.pull_request
-        local url = string.format("https://%s/%s/pull/%d/files", host, pr.repo, pr.number)
-        require("octo.navigation").open_in_browser_raw(url)
-      end
+      require("custom.octoreview").setup()
 
       require("octo").setup({
         suppress_missing_scope = {
@@ -177,8 +153,11 @@ local plugins = {
             mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
             toggle_viewed = { lhs = "<leader>rv", desc = "toggle viewed state" },
             open_review_in_browser = { lhs = "<leader>rb", desc = "open PR files view in browser" },
+            review_commits = { lhs = "<leader>rC", desc = "review a commit range" },
+            show_review_overview = { lhs = "<leader>ro", desc = "PR description and conversation" },
+            show_review_threads = { lhs = "<leader>rt", desc = "threads on this line" },
             focus_files = { lhs = "<leader>rf", desc = "focus file panel" },
-            toggle_files = { lhs = "<leader>rt", desc = "toggle file panel" },
+            toggle_files = { lhs = "<leader>rF", desc = "toggle file panel" },
             close_review_tab = { lhs = "<leader>rq", desc = "close review" },
           },
           file_panel = {
@@ -187,11 +166,28 @@ local plugins = {
             mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
             toggle_viewed = { lhs = "<leader>rv", desc = "toggle viewed state" },
             open_review_in_browser = { lhs = "<leader>rb", desc = "open PR files view in browser" },
+            show_review_overview = { lhs = "<leader>ro", desc = "PR description and conversation" },
+            show_review_diff = { lhs = "<leader>rd", desc = "back to the diff" },
             submit_review = { lhs = "<leader>rS", desc = "submit review" },
             discard_review = { lhs = "<leader>rx", desc = "discard review" },
             focus_files = { lhs = "<leader>rf", desc = "focus file panel" },
-            toggle_files = { lhs = "<leader>rt", desc = "toggle file panel" },
+            toggle_files = { lhs = "<leader>rF", desc = "toggle file panel" },
             close_review_tab = { lhs = "<leader>rq", desc = "close review" },
+          },
+          review_thread = {
+            resolve_thread = { lhs = "<leader>rr", desc = "resolve thread" },
+            unresolve_thread = { lhs = "<leader>rR", desc = "unresolve thread" },
+            show_review_diff = { lhs = "<leader>rd", desc = "back to the diff" },
+            show_review_overview = { lhs = "<leader>ro", desc = "PR description and conversation" },
+            close_review_tab = { lhs = "<leader>rq", desc = "close review" },
+          },
+          pull_request = {
+            resolve_thread = { lhs = "<leader>rr", desc = "resolve thread" },
+            unresolve_thread = { lhs = "<leader>rR", desc = "unresolve thread" },
+            show_review_diff = { lhs = "<leader>rd", desc = "back to the diff" },
+            review_start = { lhs = "<leader>rn", desc = "start a review" },
+            review_resume = { lhs = "<leader>ru", desc = "resume a pending review" },
+            add_reviewer = { lhs = "<leader>ra", desc = "add reviewer" },
           },
         },
       })

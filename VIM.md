@@ -127,11 +127,25 @@ Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or fil
 | `<leader>rc` | Add review comment |
 | `<leader>rs` | Add review suggestion |
 | `]t` / `[t` | Next/prev comment thread |
+| `<leader>rt` | Open threads on the current line |
+| `<leader>rr` / `<leader>rR` | Resolve / unresolve thread |
 | `<leader>rb` | Open the PR's Files changed tab in the browser |
-| `<leader>rf` / `<leader>rt` | Focus / toggle file panel |
+| `<leader>rf` / `<leader>rF` | Focus / toggle file panel |
 | `<leader>rS` | Submit review |
 | `<leader>rx` | Discard review |
 | `<leader>rq` | Close review |
+
+Three views, switchable from any of them:
+
+| Key | View |
+|-----|------|
+| `<leader>rd` | The diff (jumps back to the review tab) |
+| `<leader>ro` | PR description and conversation, in its own tab |
+| `<leader>rt` | Comment threads on the current line |
+
+`<leader>rC` re-reviews a commit range instead of the whole diff, which is what you want on the second and third pass through a PR. `gf` opens the real file from your local checkout.
+
+From the PR description buffer: `<leader>rn` starts a review, `<leader>ru` resumes a pending one, `<leader>ra` adds a reviewer.
 
 ### Sessions
 
