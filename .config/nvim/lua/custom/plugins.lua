@@ -255,6 +255,23 @@ local plugins = {
   -- Telescope extensions
   ---------------------------------------------------------------
   {
+    -- Ctrl-j/k moves the selection, in every picker.
+    "nvim-telescope/telescope.nvim",
+    opts = function(_, opts)
+      local actions = require "telescope.actions"
+      local nav = {
+        ["<C-j>"] = actions.move_selection_next,
+        ["<C-k>"] = actions.move_selection_previous,
+      }
+      opts.defaults = opts.defaults or {}
+      opts.defaults.mappings = opts.defaults.mappings or {}
+      for _, mode in ipairs { "i", "n" } do
+        opts.defaults.mappings[mode] = vim.tbl_extend("force", opts.defaults.mappings[mode] or {}, nav)
+      end
+      return opts
+    end,
+  },
+  {
     -- Native fzf sorter for telescope (much faster fuzzy matching).
     "nvim-telescope/telescope-fzf-native.nvim",
     build = "make",

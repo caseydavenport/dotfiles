@@ -36,6 +36,8 @@ NvChad's leader key is `Space`. Press it and wait to see which-key groups with i
 | `<leader>fk` | Find marks/bookmarks |
 | `<leader>ft` | Find all TODOs/FIXMEs/HACKs in project |
 
+Inside any picker, `<C-j>` / `<C-k>` move the selection (alongside telescope's default `<C-n>` / `<C-p>`).
+
 ### Go development
 
 | Key | Action |
