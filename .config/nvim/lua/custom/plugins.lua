@@ -145,6 +145,18 @@ local plugins = {
         layout:select_next_unviewed_file()
       end
 
+      -- Octo's own open_in_browser can't see a review buffer, so it opens the repo page.
+      require("octo.mappings").open_review_in_browser = function()
+        local review = require("octo.reviews").get_current_review()
+        if not review then
+          return
+        end
+        local host = require("octo.utils").get_remote_host() or "github.com"
+        local pr = review.pull_request
+        local url = string.format("https://%s/%s/pull/%d/files", host, pr.repo, pr.number)
+        require("octo.navigation").open_in_browser_raw(url)
+      end
+
       require("octo").setup({
         suppress_missing_scope = {
           projects_v2 = true,
@@ -164,6 +176,7 @@ local plugins = {
             select_prev_entry = { lhs = "<S-Tab>", desc = "prev file" },
             mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
             toggle_viewed = { lhs = "<leader>v", desc = "toggle viewed state" },
+            open_review_in_browser = { lhs = "<C-b>", desc = "open PR files view in browser" },
             focus_files = { lhs = "<leader>e", desc = "focus file panel" },
             toggle_files = { lhs = "<leader>b", desc = "toggle file panel" },
             close_review_tab = { lhs = "<leader>q", desc = "close review" },
@@ -173,6 +186,7 @@ local plugins = {
             select_prev_entry = { lhs = "<S-Tab>", desc = "prev file" },
             mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
             toggle_viewed = { lhs = "<leader>v", desc = "toggle viewed state" },
+            open_review_in_browser = { lhs = "<C-b>", desc = "open PR files view in browser" },
             submit_review = { lhs = "<leader>rs", desc = "submit review" },
             discard_review = { lhs = "<leader>rd", desc = "discard review" },
             close_review_tab = { lhs = "<leader>q", desc = "close review" },
