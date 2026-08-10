@@ -77,6 +77,200 @@ function M.show_threads()
   require("octo.reviews.thread-panel").show_review_threads(true)
 end
 
+---Threads still wanting attention, ordered by file then line.
+---@param review table
+---@param include_resolved boolean
+---@return table[]
+local function open_threads(review, include_resolved)
+  local file_order = {}
+  for i, file in ipairs(review.layout.files) do
+    file_order[file.path] = i
+  end
+  local out = {}
+  for _, thread in pairs(review.threads) do
+    local settled = thread.isResolved or thread.isOutdated
+    if #thread.comments.nodes > 0 and (include_resolved or not settled) then
+      table.insert(out, thread)
+    end
+  end
+  table.sort(out, function(a, b)
+    local fa = file_order[a.path] or math.huge
+    local fb = file_order[b.path] or math.huge
+    if fa ~= fb then
+      return fa < fb
+    end
+    return (a.startLine or 0) < (b.startLine or 0)
+  end)
+  return out
+end
+
+---@param review table
+---@param thread table
+local function goto_thread(review, thread)
+  local layout = review.layout
+  for _, file in ipairs(layout.files) do
+    if file.path == thread.path then
+      -- Synchronous, and it focuses the diff window itself.
+      layout:set_current_file(file)
+      break
+    end
+  end
+  local win = layout.unified_winid or layout.right_winid
+  if win and vim.api.nvim_win_is_valid(win) then
+    local last = vim.api.nvim_buf_line_count(vim.api.nvim_win_get_buf(win))
+    pcall(vim.api.nvim_win_set_cursor, win, { math.min(thread.startLine, last), 0 })
+  end
+end
+
+---Where the cursor sits in the thread ordering, as (file index, line).
+---@param review table
+---@return integer, integer
+local function cursor_position(review)
+  local layout = review.layout
+  local file = layout:get_current_file()
+  local idx = math.huge
+  if file then
+    for i, f in ipairs(layout.files) do
+      if f.path == file.path then
+        idx = i
+        break
+      end
+    end
+  end
+  -- Outside the diff window the cursor line is meaningless, so anchor to the file.
+  local win = layout.unified_winid or layout.right_winid
+  if vim.api.nvim_get_current_win() ~= win then
+    return idx, 0
+  end
+  return idx, vim.fn.line "."
+end
+
+---@param step integer
+local function move_thread(step)
+  local review = current_review()
+  if not review then
+    return
+  end
+  local threads = open_threads(review, false)
+  if #threads == 0 then
+    require("octo.utils").info "No open threads"
+    return
+  end
+  local file_order = {}
+  for i, f in ipairs(review.layout.files) do
+    file_order[f.path] = i
+  end
+  local idx, line = cursor_position(review)
+
+  local function after(t)
+    local ti = file_order[t.path] or math.huge
+    if ti ~= idx then
+      return step > 0 and ti > idx or step < 0 and ti < idx
+    end
+    local tl = t.startLine or 0
+    return step > 0 and tl > line or step < 0 and tl < line
+  end
+
+  local found
+  if step > 0 then
+    for _, t in ipairs(threads) do
+      if after(t) then
+        found = t
+        break
+      end
+    end
+  else
+    for i = #threads, 1, -1 do
+      if after(threads[i]) then
+        found = threads[i]
+        break
+      end
+    end
+  end
+  -- Wrap, so repeated presses walk the whole PR.
+  goto_thread(review, found or threads[step > 0 and 1 or #threads])
+end
+
+function M.next_thread()
+  move_thread(1)
+end
+
+function M.prev_thread()
+  move_thread(-1)
+end
+
+---@param thread table
+---@return string
+local function thread_summary(thread)
+  local comment = thread.comments.nodes[1]
+  local body = vim.split(comment.body or "", "\n")[1] or ""
+  return vim.trim(body)
+end
+
+---Telescope picker over every open thread in the review.
+---@param opts? { include_resolved?: boolean }
+function M.thread_picker(opts)
+  opts = opts or {}
+  local review = current_review()
+  if not review then
+    return
+  end
+  local threads = open_threads(review, opts.include_resolved or false)
+  if #threads == 0 then
+    require("octo.utils").info "No open threads"
+    return
+  end
+
+  local pickers = require "telescope.pickers"
+  local finders = require "telescope.finders"
+  local actions = require "telescope.actions"
+  local action_state = require "telescope.actions.state"
+  local entry_display = require "telescope.pickers.entry_display"
+  local conf = require("telescope.config").values
+
+  local displayer = entry_display.create {
+    separator = "  ",
+    items = {
+      { width = 3 },
+      { width = 44 },
+      { width = 16 },
+      { remaining = true },
+    },
+  }
+
+  local function entry_maker(thread)
+    local ref = thread.path:gsub("^.*/", "") .. ":" .. thread.startLine
+    local author = thread.comments.nodes[1].author.login
+    local mark = thread.isResolved and "✓" or (thread.isOutdated and "~" or "●")
+    local summary = thread_summary(thread)
+    return {
+      value = thread,
+      ordinal = thread.path .. " " .. author .. " " .. summary,
+      display = function()
+        return displayer { mark, ref, author, summary }
+      end,
+    }
+  end
+
+  pickers
+    .new({}, {
+      prompt_title = string.format("Review threads (%d)", #threads),
+      finder = finders.new_table { results = threads, entry_maker = entry_maker },
+      sorter = conf.generic_sorter {},
+      attach_mappings = function(bufnr)
+        actions.select_default:replace(function()
+          local entry = action_state.get_selected_entry()
+          actions.close(bufnr)
+          if entry then
+            goto_thread(review, entry.value)
+          end
+        end)
+        return true
+      end,
+    })
+    :find()
+end
+
 ---Register the actions octo's mapping table looks up by name.
 function M.setup()
   local mappings = require "octo.mappings"
@@ -85,6 +279,14 @@ function M.setup()
   mappings.show_review_diff = M.show_diff
   mappings.show_review_overview = M.show_overview
   mappings.show_review_threads = M.show_threads
+  mappings.next_open_thread = M.next_thread
+  mappings.prev_open_thread = M.prev_thread
+  mappings.list_review_threads = function()
+    M.thread_picker()
+  end
+  mappings.list_all_review_threads = function()
+    M.thread_picker { include_resolved = true }
+  end
 end
 
 return M

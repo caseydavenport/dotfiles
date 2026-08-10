@@ -126,7 +126,10 @@ Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or fil
 | `<leader>rv` | Toggle viewed state (no jump) |
 | `<leader>rc` | Add review comment |
 | `<leader>rs` | Add review suggestion |
-| `]t` / `[t` | Next/prev comment thread |
+| `<C-n>` / `<C-p>` | Next/prev open thread, across every file in the PR |
+| `<leader>rl` | Telescope list of open threads |
+| `<leader>rL` | Same, including resolved and outdated |
+| `]t` / `[t` | Next/prev thread within the current file (octo's default) |
 | `<leader>rt` | Open threads on the current line |
 | `<leader>rr` / `<leader>rR` | Resolve / unresolve thread |
 | `<leader>rb` | Open the PR's Files changed tab in the browser |
