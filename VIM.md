@@ -114,19 +114,24 @@ Runs in a neovim terminal split. Go uses `go test`, Python uses pytest from the 
 
 | Key | Action |
 |-----|--------|
+Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or file-tree bindings mid-review.
+
+| Key | Action |
+|-----|--------|
 | `:Octo pr list` | List PRs for review |
 | `<leader>rp` | Pick a PR to review (queue order from the pr-tracker dashboard) |
-| `<leader>ca` | Add review comment |
-| `<leader>cs` | Add review suggestion |
-| `<leader>rs` | Submit review |
-| `<leader>rd` | Discard review |
 | `<Tab>` / `<S-Tab>` | Next/prev file in review |
 | `<leader><space>` | Mark file viewed, jump to next unviewed |
-| `<leader>v` | Toggle viewed state (no jump) |
 | `]u` / `[u` | Next/prev unviewed file |
-| `<leader>pb` | Open the PR's Files changed tab in the browser |
-| `<leader>e` / `<leader>b` | Focus / toggle file panel |
-| `<leader>q` | Close review |
+| `<leader>rv` | Toggle viewed state (no jump) |
+| `<leader>rc` | Add review comment |
+| `<leader>rs` | Add review suggestion |
+| `]t` / `[t` | Next/prev comment thread |
+| `<leader>rb` | Open the PR's Files changed tab in the browser |
+| `<leader>rf` / `<leader>rt` | Focus / toggle file panel |
+| `<leader>rS` | Submit review |
+| `<leader>rx` | Discard review |
+| `<leader>rq` | Close review |
 
 ### Sessions
 
