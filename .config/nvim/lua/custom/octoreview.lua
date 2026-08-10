@@ -104,6 +104,23 @@ local function open_threads(review, include_resolved)
   return out
 end
 
+---In a unified diff, thread lines are file lines on one side. Map to a screen line.
+---@param bufnr integer
+---@param thread table
+---@return integer
+local function display_line(bufnr, thread)
+  local ok, line_map = pcall(vim.api.nvim_buf_get_var, bufnr, "octo_unified_line_map")
+  if not ok or not line_map then
+    return thread.startLine or 1
+  end
+  for line, entry in ipairs(line_map) do
+    if entry.side == thread.diffSide and entry.line == thread.startLine then
+      return line
+    end
+  end
+  return thread.startLine or 1
+end
+
 ---@param review table
 ---@param thread table
 local function goto_thread(review, thread)
@@ -117,8 +134,11 @@ local function goto_thread(review, thread)
   end
   local win = layout.unified_winid or layout.right_winid
   if win and vim.api.nvim_win_is_valid(win) then
-    local last = vim.api.nvim_buf_line_count(vim.api.nvim_win_get_buf(win))
-    pcall(vim.api.nvim_win_set_cursor, win, { math.min(thread.startLine, last), 0 })
+    local bufnr = vim.api.nvim_win_get_buf(win)
+    local target = display_line(bufnr, thread)
+    local last = vim.api.nvim_buf_line_count(bufnr)
+    pcall(vim.api.nvim_win_set_cursor, win, { math.min(target, last), 0 })
+    vim.cmd "normal! zz"
   end
 end
 
@@ -161,13 +181,16 @@ local function move_thread(step)
     file_order[f.path] = i
   end
   local idx, line = cursor_position(review)
+  local win = review.layout.unified_winid or review.layout.right_winid
+  local bufnr = win and vim.api.nvim_win_is_valid(win) and vim.api.nvim_win_get_buf(win)
 
   local function after(t)
     local ti = file_order[t.path] or math.huge
     if ti ~= idx then
       return step > 0 and ti > idx or step < 0 and ti < idx
     end
-    local tl = t.startLine or 0
+    -- Same file, so compare against the screen line the thread actually sits on.
+    local tl = bufnr and display_line(bufnr, t) or (t.startLine or 0)
     return step > 0 and tl > line or step < 0 and tl < line
   end
 
