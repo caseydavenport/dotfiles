@@ -134,6 +134,7 @@ Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or fil
 | `]t` / `[t` | Next/prev thread within the current file (octo's default) |
 | `<leader>rt` | Open threads on the current line |
 | `<leader>rr` / `<leader>rR` | Resolve / unresolve thread |
+| `<leader>ri` | CI checks for the PR, failing first; select one to open it |
 | `<leader>rb` | Open the PR's Files changed tab in the browser |
 | `<leader>rf` / `<leader>rF` | Focus / toggle file panel |
 | `<leader>rS` | Submit review |

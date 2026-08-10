@@ -294,6 +294,108 @@ function M.thread_picker(opts)
     :find()
 end
 
+local CHECK_ICONS = { fail = "✗", pending = "◌", cancel = "⊘", skipping = "-", pass = "✓" }
+local CHECK_ORDER = { fail = 1, pending = 2, cancel = 3, skipping = 4, pass = 5 }
+
+---Checks for the PR under review. Covers Semaphore and Argo, which post as
+---commit statuses rather than GitHub Actions runs.
+function M.checks_picker()
+  local review = current_review()
+  if not review then
+    return
+  end
+  local pr = review.pull_request
+  local args = {
+    "gh",
+    "pr",
+    "checks",
+    tostring(pr.number),
+    "-R",
+    pr.repo,
+    "--json",
+    "bucket,name,state,link,description,workflow",
+  }
+  require("octo.utils").info "Fetching checks ..."
+  vim.system(args, { text = true }, function(out)
+    -- gh exits non-zero when checks are failing or pending, so parse regardless.
+    local ok, checks = pcall(vim.json.decode, out.stdout ~= "" and out.stdout or "[]")
+    vim.schedule(function()
+      if not ok or #checks == 0 then
+        require("octo.utils").info "No checks reported"
+        return
+      end
+      table.sort(checks, function(a, b)
+        local oa = CHECK_ORDER[a.bucket] or 9
+        local ob = CHECK_ORDER[b.bucket] or 9
+        if oa ~= ob then
+          return oa < ob
+        end
+        return a.name < b.name
+      end)
+      M.show_checks(pr, checks)
+    end)
+  end)
+end
+
+---@param pr table
+---@param checks table[]
+function M.show_checks(pr, checks)
+  local pickers = require "telescope.pickers"
+  local finders = require "telescope.finders"
+  local actions = require "telescope.actions"
+  local action_state = require "telescope.actions.state"
+  local entry_display = require "telescope.pickers.entry_display"
+  local conf = require("telescope.config").values
+
+  local displayer = entry_display.create {
+    separator = "  ",
+    items = {
+      { width = 2 },
+      { width = 40 },
+      { remaining = true },
+    },
+  }
+
+  local failing = 0
+  for _, check in ipairs(checks) do
+    if check.bucket == "fail" then
+      failing = failing + 1
+    end
+  end
+
+  local function entry_maker(check)
+    return {
+      value = check,
+      ordinal = check.bucket .. " " .. check.name,
+      display = function()
+        return displayer {
+          CHECK_ICONS[check.bucket] or "?",
+          check.name,
+          check.description or "",
+        }
+      end,
+    }
+  end
+
+  pickers
+    .new({}, {
+      prompt_title = string.format("%s#%d checks (%d failing)", pr.repo:gsub("^[^/]+/", ""), pr.number, failing),
+      finder = finders.new_table { results = checks, entry_maker = entry_maker },
+      sorter = conf.generic_sorter {},
+      attach_mappings = function(bufnr)
+        actions.select_default:replace(function()
+          local entry = action_state.get_selected_entry()
+          actions.close(bufnr)
+          if entry and entry.value.link ~= "" then
+            require("octo.navigation").open_in_browser_raw(entry.value.link)
+          end
+        end)
+        return true
+      end,
+    })
+    :find()
+end
+
 ---@param review table
 ---@return string
 local function format_winbar(review)
@@ -363,6 +465,7 @@ function M.setup()
   mappings.list_all_review_threads = function()
     M.thread_picker { include_resolved = true }
   end
+  mappings.list_pr_checks = M.checks_picker
 
   vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter", "TabEnter" }, {
     group = vim.api.nvim_create_augroup("OctoReviewWinbar", { clear = true }),
