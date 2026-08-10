@@ -364,3 +364,7 @@ alias tm-side='tmux new-session -A -s side'
 
 # opencode
 export PATH=/home/casey/.opencode/bin:$PATH
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/casey/.local/bin:$PATH"
