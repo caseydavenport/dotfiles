@@ -12,6 +12,9 @@ local SOURCES = {
 
 local JSON_FIELDS = "number,title,repository,author,updatedAt,isDraft,url"
 
+-- The pr-tracker dashboard, when it's running locally.
+local QUEUE_URL = "http://127.0.0.1:48923/api/prs"
+
 -- Bot accounts GitHub reports as regular users. Backport and sync PR openers.
 M.bot_logins = {
   ["marvin-tigera"] = true,
@@ -46,12 +49,34 @@ local function local_checkout(name_with_owner)
   end
 end
 
+---Queue positions from the pr-tracker dashboard, keyed by "repo#number".
+---The dashboard owns the ranking; this is read-only and optional.
+---@param cb fun(ranks: table<string, integer>)
+local function fetch_queue(cb)
+  local args = { "curl", "-sf", "--max-time", "1", QUEUE_URL }
+  vim.system(args, { text = true }, function(out)
+    local ranks = {}
+    if out.code == 0 and out.stdout ~= "" then
+      local ok, decoded = pcall(vim.json.decode, out.stdout)
+      if ok then
+        for _, rr in ipairs(decoded.review_requests or {}) do
+          if rr.rank and rr.rank > 0 then
+            ranks[rr.repo .. "#" .. rr.number] = rr.rank
+          end
+        end
+      end
+    end
+    cb(ranks)
+  end)
+end
+
 ---@param limit integer
 ---@param cb fun(prs: table[])
 local function fetch_prs(limit, cb)
   local by_key = {}
   local order = {}
-  local pending = #SOURCES
+  local queue = {}
+  local pending = #SOURCES + 1
 
   local function done()
     pending = pending - 1
@@ -60,15 +85,26 @@ local function fetch_prs(limit, cb)
     end
     local prs = {}
     for _, key in ipairs(order) do
-      table.insert(prs, by_key[key])
+      local pr = by_key[key]
+      pr.queue_rank = queue[key]
+      table.insert(prs, pr)
     end
+    -- Queued PRs lead, in queue order. Everything else falls back to recency.
     table.sort(prs, function(a, b)
+      if a.queue_rank ~= b.queue_rank then
+        return (a.queue_rank or math.huge) < (b.queue_rank or math.huge)
+      end
       return a.updatedAt > b.updatedAt
     end)
     vim.schedule(function()
       cb(prs)
     end)
   end
+
+  fetch_queue(function(ranks)
+    queue = ranks
+    done()
+  end)
 
   for _, source in ipairs(SOURCES) do
     local args = {
@@ -198,6 +234,7 @@ function M.picker(opts)
     local displayer = entry_display.create {
       separator = "  ",
       items = {
+        { width = 3 },
         { width = 10 },
         { width = 34 },
         { width = 18 },
@@ -227,10 +264,18 @@ function M.picker(opts)
       return a:gsub("^[^/]+/", "") < b:gsub("^[^/]+/", "")
     end)
 
+    local queued = false
+    for _, pr in ipairs(prs) do
+      queued = queued or pr.queue_rank ~= nil
+    end
+
     local tabs = {
       { label = "assigned", tag = "assigned" },
       { label = "all" },
     }
+    if queued then
+      table.insert(tabs, 1, { label = "queue", queue_only = true })
+    end
     for _, repo in ipairs(repos) do
       table.insert(tabs, { label = repo:gsub("^[^/]+/", ""), repo = repo })
     end
@@ -243,6 +288,9 @@ function M.picker(opts)
     ---@return boolean
     local function matches(pr, index)
       local this = tabs[index]
+      if this.queue_only and not pr.queue_rank then
+        return false
+      end
       if this.repo and pr.repo ~= this.repo then
         return false
       end
@@ -275,6 +323,7 @@ function M.picker(opts)
         ordinal = tags .. " " .. pr.repo .. " " .. pr.title .. " " .. pr.author.login,
         display = function()
           return displayer {
+            pr.queue_rank and tostring(pr.queue_rank) or "",
             tags,
             ref,
             pr.author.login,

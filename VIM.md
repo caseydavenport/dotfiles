@@ -115,6 +115,7 @@ Runs in a neovim terminal split. Go uses `go test`, Python uses pytest from the 
 | Key | Action |
 |-----|--------|
 | `:Octo pr list` | List PRs for review |
+| `<leader>rp` | Pick a PR to review (queue order from the pr-tracker dashboard) |
 | `<leader>ca` | Add review comment |
 | `<leader>cs` | Add review suggestion |
 | `<leader>rs` | Submit review |
