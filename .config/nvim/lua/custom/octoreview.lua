@@ -104,21 +104,48 @@ local function open_threads(review, include_resolved)
   return out
 end
 
----In a unified diff, thread lines are file lines on one side. Map to a screen line.
+---In a unified diff, comment lines are file lines on one side. Map to a screen line.
+---@param bufnr integer
+---@param side string
+---@param file_line integer
+---@return integer
+function M.display_line(bufnr, side, file_line)
+  local ok, line_map = pcall(vim.api.nvim_buf_get_var, bufnr, "octo_unified_line_map")
+  if not ok or not line_map then
+    return file_line
+  end
+  for line, entry in ipairs(line_map) do
+    if entry.side == side and entry.line == file_line then
+      return line
+    end
+  end
+  return file_line
+end
+
 ---@param bufnr integer
 ---@param thread table
 ---@return integer
 local function display_line(bufnr, thread)
-  local ok, line_map = pcall(vim.api.nvim_buf_get_var, bufnr, "octo_unified_line_map")
-  if not ok or not line_map then
-    return thread.startLine or 1
+  return M.display_line(bufnr, thread.diffSide, thread.startLine or 1)
+end
+
+---The review whose layout is live, for callers outside this module.
+---@return table?
+function M.current_review()
+  return current_review()
+end
+
+---The diff window of the current review.
+---@return integer?
+function M.diff_win()
+  local review = current_review()
+  if not review or not review.layout then
+    return nil
   end
-  for line, entry in ipairs(line_map) do
-    if entry.side == thread.diffSide and entry.line == thread.startLine then
-      return line
-    end
+  local win = review.layout.unified_winid or review.layout.right_winid
+  if win and vim.api.nvim_win_is_valid(win) then
+    return win
   end
-  return thread.startLine or 1
 end
 
 ---@param review table

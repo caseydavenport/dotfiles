@@ -132,6 +132,7 @@ local plugins = {
     config = function()
       require("custom.prreview").setup()
       require("custom.octoreview").setup()
+      require("custom.aireview").setup()
 
       require("octo").setup({
         suppress_missing_scope = {
@@ -151,6 +152,9 @@ local plugins = {
             list_review_threads = { lhs = "<leader>rl", desc = "list open threads" },
             list_all_review_threads = { lhs = "<leader>rL", desc = "list all threads" },
             list_pr_checks = { lhs = "<leader>ri", desc = "CI checks for this PR" },
+            ai_review_file = { lhs = "<leader>raf", desc = "Claude: review this file" },
+            ai_review_pr = { lhs = "<leader>rap", desc = "Claude: review the whole PR" },
+            ai_findings = { lhs = "<leader>ral", desc = "Claude: list findings" },
             select_next_entry = { lhs = "<Tab>", desc = "next file" },
             select_prev_entry = { lhs = "<S-Tab>", desc = "prev file" },
             mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
@@ -174,6 +178,9 @@ local plugins = {
             list_review_threads = { lhs = "<leader>rl", desc = "list open threads" },
             list_all_review_threads = { lhs = "<leader>rL", desc = "list all threads" },
             list_pr_checks = { lhs = "<leader>ri", desc = "CI checks for this PR" },
+            ai_review_file = { lhs = "<leader>raf", desc = "Claude: review this file" },
+            ai_review_pr = { lhs = "<leader>rap", desc = "Claude: review the whole PR" },
+            ai_findings = { lhs = "<leader>ral", desc = "Claude: list findings" },
             submit_review = { lhs = "<leader>rS", desc = "submit review" },
             discard_review = { lhs = "<leader>rx", desc = "discard review" },
             focus_files = { lhs = "<leader>rf", desc = "focus file panel" },
@@ -196,7 +203,7 @@ local plugins = {
             show_review_diff = { lhs = "<leader>rd", desc = "back to the diff" },
             review_start = { lhs = "<leader>rn", desc = "start a review" },
             review_resume = { lhs = "<leader>ru", desc = "resume a pending review" },
-            add_reviewer = { lhs = "<leader>ra", desc = "add reviewer" },
+            add_reviewer = { lhs = "<leader>rw", desc = "add reviewer" },
             list_pr_checks = { lhs = "<leader>ri", desc = "CI checks for this PR" },
           },
         },

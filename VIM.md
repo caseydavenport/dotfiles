@@ -135,6 +135,9 @@ Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or fil
 | `<leader>rt` | Open threads on the current line |
 | `<leader>rr` / `<leader>rR` | Resolve / unresolve thread |
 | `<leader>ri` | CI checks for the PR, failing first; select one to open it |
+| `<leader>raf` | Claude first pass over the current file |
+| `<leader>rap` | Claude first pass over the whole PR |
+| `<leader>ral` | List Claude's findings |
 | `<leader>rb` | Open the PR's Files changed tab in the browser |
 | `<leader>rf` / `<leader>rF` | Focus / toggle file panel |
 | `<leader>rS` | Submit review |
@@ -142,6 +145,8 @@ Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or fil
 | `<leader>rq` | Close review |
 
 The diff window carries a winbar showing the PR, your position in the file list, how many files are still unviewed, and how many threads are open.
+
+Claude's first pass never touches GitHub. Findings show as virtual text in the diff and persist under `~/.local/share/nvim/octo-findings/`. In the findings picker, `<CR>` jumps to one, `<C-a>` turns it into a pending review comment you edit before submitting, and `<C-d>` dismisses it. Dismissals survive a re-run.
 
 Three views, switchable from any of them:
 
