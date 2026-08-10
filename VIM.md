@@ -124,7 +124,7 @@ Runs in a neovim terminal split. Go uses `go test`, Python uses pytest from the 
 | `<leader><space>` | Mark file viewed, jump to next unviewed |
 | `<leader>v` | Toggle viewed state (no jump) |
 | `]u` / `[u` | Next/prev unviewed file |
-| `<C-b>` | Open the PR's Files changed tab in the browser |
+| `<leader>pb` | Open the PR's Files changed tab in the browser |
 | `<leader>e` / `<leader>b` | Focus / toggle file panel |
 | `<leader>q` | Close review |
 
