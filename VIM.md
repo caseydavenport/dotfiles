@@ -140,6 +140,8 @@ Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or fil
 | `<leader>rx` | Discard review |
 | `<leader>rq` | Close review |
 
+The diff window carries a winbar showing the PR, your position in the file list, how many files are still unviewed, and how many threads are open.
+
 Three views, switchable from any of them:
 
 | Key | View |

@@ -294,6 +294,59 @@ function M.thread_picker(opts)
     :find()
 end
 
+---@param review table
+---@return string
+local function format_winbar(review)
+  local layout = review.layout
+  local pr = review.pull_request
+  local total = #layout.files
+  local unviewed = 0
+  for _, file in ipairs(layout.files) do
+    if file.viewed_state ~= "VIEWED" then
+      unviewed = unviewed + 1
+    end
+  end
+  local threads = #open_threads(review, false)
+
+  local parts = {
+    string.format("%%#OctoBlue#%s#%d%%*", pr.repo:gsub("^[^/]+/", ""), pr.number),
+    string.format("file %d/%d", layout.selected_file_idx, total),
+  }
+  if unviewed > 0 then
+    table.insert(parts, string.format("%%#OctoYellow#%d unviewed%%*", unviewed))
+  else
+    table.insert(parts, "%#OctoGreen#all viewed%*")
+  end
+  if threads > 0 then
+    table.insert(parts, string.format("%%#OctoRed#%d open%%*", threads))
+  end
+  return " " .. table.concat(parts, "  ·  ")
+end
+
+---Winbar contents for the review diff. Re-evaluated on every redraw.
+---@return string
+function M.winbar()
+  local review = require("octo.reviews").get_current_review()
+  if not review or not review.layout then
+    return ""
+  end
+  local ok, out = pcall(format_winbar, review)
+  return ok and out or ""
+end
+
+---Show the winbar on the diff window of the review in this tabpage.
+local function attach_winbar()
+  local reviews = require "octo.reviews"
+  local review = reviews.reviews[tostring(vim.api.nvim_get_current_tabpage())]
+  if not (review and review.layout) then
+    return
+  end
+  local win = review.layout.unified_winid or review.layout.right_winid
+  if win and vim.api.nvim_win_is_valid(win) then
+    vim.wo[win].winbar = "%{%v:lua.require'custom.octoreview'.winbar()%}"
+  end
+end
+
 ---Register the actions octo's mapping table looks up by name.
 function M.setup()
   local mappings = require "octo.mappings"
@@ -310,6 +363,11 @@ function M.setup()
   mappings.list_all_review_threads = function()
     M.thread_picker { include_resolved = true }
   end
+
+  vim.api.nvim_create_autocmd({ "BufWinEnter", "WinEnter", "TabEnter" }, {
+    group = vim.api.nvim_create_augroup("OctoReviewWinbar", { clear = true }),
+    callback = attach_winbar,
+  })
 end
 
 return M
