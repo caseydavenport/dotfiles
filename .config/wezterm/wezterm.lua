@@ -4,8 +4,8 @@ local config = wezterm.config_builder()
 
 -- ============ appearance ============
 config.font = wezterm.font_with_fallback {
-  'JetBrains Mono',
-  'Fira Code',
+  'JetBrainsMono Nerd Font Mono',
+  'Noto Color Emoji',
   'DejaVu Sans Mono',
 }
 config.font_size = 11.0
