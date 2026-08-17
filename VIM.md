@@ -121,7 +121,7 @@ Everything lives under `<leader>r`, so nothing shadows the Sessions, VCS, or fil
 | Key | Action |
 |-----|--------|
 | `:Octo pr list` | List PRs for review |
-| `<leader>rp` | Pick a PR to review (queue order from the pr-tracker dashboard) |
+| `<leader>rp` | Pick a PR to review (most recently updated first) |
 | `<Tab>` / `<S-Tab>` | Next/prev file in review |
 | `<leader><space>` | Mark file viewed, jump to next unviewed |
 | `]u` / `[u` | Next/prev unviewed file |
