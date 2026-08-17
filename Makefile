@@ -78,6 +78,7 @@ bin:
 nvimrc:
 	mkdir -p ${HOME}/.config/nvim/lua
 	ln -sfn $(CURDIR)/.config/nvim/lua/custom ${HOME}/.config/nvim/lua/custom
+	ln -sfn $(CURDIR)/.config/nvim/after ${HOME}/.config/nvim/after
 
 ############################################################
 # ZSH addons

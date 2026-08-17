@@ -184,6 +184,19 @@ From the PR description buffer: `<leader>rn` starts a review, `<leader>ru` resum
 | `Alt+t` | Toggle horizontal terminal |
 | `Alt+v` | Toggle vertical terminal |
 
+### Markdown
+
+Buffer-local, only bound in `.md` files.
+
+| Key | Action |
+|-----|--------|
+| `<leader>mr` | Toggle in-buffer rendering (render-markdown) |
+| `<leader>mp` | Toggle live preview in the browser |
+| `<leader>ms` | Toggle spell check |
+| `<leader>mf` | Format with prettier now |
+
+Markdown buffers also soft-wrap, spell check against `en_us`, drop the column ruler, and remap `j`/`k` to move by screen line unless a count is given.
+
 ### Misc
 
 | Key | Action |
@@ -191,7 +204,6 @@ From the PR description buffer: `<leader>rn` starts a review, `<leader>ru` resum
 | `<leader>ch` | NvChad keybinding cheatsheet |
 | `<leader>n` | Toggle line numbers |
 | `<leader>/` | Toggle comment |
-| `:MarkdownPreview` | Live preview of markdown files |
 
 ## Which-key groups
 
@@ -202,6 +214,7 @@ Press `<leader>` to see these organized groups:
 -  **Debug** — Breakpoints, stepping, REPL
 -  **Diagnostics** — Trouble panel, quickfix
 -  **Find** — All telescope search bindings
+-  **Markdown** — Render, preview, spell, format (`<leader>m`)
 -  **Go / Git** — Go tools, coverage, git status/commits/blame
 -  **Python** — venv, inlay hints, REPL (`<leader>P`)
 -  **Test** — nearest/file/suite/last, Go and Python (`<leader>t`)
@@ -215,7 +228,7 @@ Press `<leader>` to see these organized groups:
 - **vim-go** -- Go highlighting, formatting (gofumpt), gopls integration
 - **nvim-lspconfig** -- LSP support (gopls, basedpyright, ruff enabled)
 - **basedpyright + ruff** -- Python LSP: types/nav (basedpyright) and lint/format (ruff)
-- **conform.nvim** -- Python import-sort + ruff format on save
+- **conform.nvim** -- Format on save: ruff for Python, prettier for markdown (prose wrap preserved)
 - **venv-selector.nvim** -- Pick a virtualenv/conda env, restarts the Python LSPs against it
 - **iron.nvim** -- Send code to an IPython REPL split
 - **jupytext.nvim** -- Open `.ipynb` notebooks as editable text
@@ -237,6 +250,7 @@ Press `<leader>` to see these organized groups:
 - **vim-test** -- Run tests from vim (Go and Python/pytest)
 - **nvim-tree** -- File tree (adaptive size)
 - **markdown-preview** -- Live markdown preview in browser
+- **render-markdown.nvim** -- Renders headings, tables, and code blocks in the buffer; the cursor line stays raw
 - **LuaSnip** -- Custom snippets
 
 ## Editor settings

@@ -110,6 +110,18 @@ local plugins = {
       build = ":call mkdp#util#install()",
   },
   {
+    -- Render headings, tables, and code blocks in the buffer instead of a browser.
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = { "markdown" },
+    dependencies = { "nvim-treesitter/nvim-treesitter", "nvim-tree/nvim-web-devicons" },
+    opts = {
+      heading = { sign = false },
+      code = { sign = false, width = "block", right_pad = 2 },
+      -- Show the raw text of whichever line the cursor is on so it stays editable.
+      anti_conceal = { enabled = true },
+    },
+  },
+  {
     -- Configure nvim-tree.
     "nvim-tree/nvim-tree.lua",
     opts = {
@@ -163,6 +175,7 @@ local plugins = {
             review_commits = { lhs = "<leader>rC", desc = "review a commit range" },
             show_review_overview = { lhs = "<leader>ro", desc = "PR description and conversation" },
             show_review_threads = { lhs = "<leader>rt", desc = "threads on this line" },
+            browse_file = { lhs = "<leader>rw", desc = "browse whole file at this commit" },
             focus_files = { lhs = "<leader>rf", desc = "focus file panel" },
             toggle_files = { lhs = "<leader>rF", desc = "toggle file panel" },
             close_review_tab = { lhs = "<leader>rq", desc = "close review" },
@@ -191,6 +204,7 @@ local plugins = {
             resolve_thread = { lhs = "<leader>rr", desc = "resolve thread" },
             unresolve_thread = { lhs = "<leader>rR", desc = "unresolve thread" },
             show_review_diff = { lhs = "<leader>rd", desc = "back to the diff" },
+            delete_comment = { lhs = "<leader>rD", desc = "delete comment" },
             show_review_overview = { lhs = "<leader>ro", desc = "PR description and conversation" },
             list_review_threads = { lhs = "<leader>rl", desc = "list open threads" },
             next_open_thread = { lhs = "<C-n>", desc = "next open thread (any file)" },
@@ -201,6 +215,7 @@ local plugins = {
             resolve_thread = { lhs = "<leader>rr", desc = "resolve thread" },
             unresolve_thread = { lhs = "<leader>rR", desc = "unresolve thread" },
             show_review_diff = { lhs = "<leader>rd", desc = "back to the diff" },
+            delete_comment = { lhs = "<leader>rD", desc = "delete comment" },
             review_start = { lhs = "<leader>rn", desc = "start a review" },
             review_resume = { lhs = "<leader>ru", desc = "resume a pending review" },
             add_reviewer = { lhs = "<leader>rw", desc = "add reviewer" },
@@ -369,15 +384,29 @@ local plugins = {
     end,
   },
   ---------------------------------------------------------------
-  -- Python formatting (ruff import sort + ruff format on save)
+  -- Formatting on save (ruff for python, prettier for markdown)
   ---------------------------------------------------------------
   {
     "stevearc/conform.nvim",
-    ft = "python",
+    ft = { "python", "markdown" },
     config = function()
+      local function mason_bin(name)
+        local path = vim.fn.stdpath("data") .. "/mason/bin/" .. name
+        return vim.uv.fs_stat(path) and path or name
+      end
+
       require("conform").setup({
         formatters_by_ft = {
           python = { "ruff_organize_imports", "ruff_format" },
+          markdown = { "prettier" },
+        },
+        formatters = {
+          prettier = {
+            -- Mason is lazy-loaded on :Mason, so its bin dir isn't on PATH yet.
+            command = mason_bin("prettier"),
+            -- Markdown here is never hard-wrapped; preserve keeps paragraphs on one line.
+            prepend_args = { "--prose-wrap", "preserve" },
+          },
         },
         format_on_save = {
           timeout_ms = 3000,
@@ -457,7 +486,16 @@ local plugins = {
     "nvim-treesitter/nvim-treesitter",
     opts = function(_, opts)
       opts.ensure_installed = opts.ensure_installed or {}
-      vim.list_extend(opts.ensure_installed, { "python", "toml" })
+      vim.list_extend(opts.ensure_installed, { "python", "toml", "markdown", "markdown_inline", "yaml" })
+      return opts
+    end,
+  },
+  {
+    -- Install prettier so conform can format markdown.
+    "williamboman/mason.nvim",
+    opts = function(_, opts)
+      opts.ensure_installed = opts.ensure_installed or {}
+      vim.list_extend(opts.ensure_installed, { "prettier" })
       return opts
     end,
   },

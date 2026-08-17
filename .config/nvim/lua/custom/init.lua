@@ -127,6 +127,7 @@ vim.api.nvim_create_autocmd("User", {
         { "<leader>r", group = "Review", icon = "" },
         { "<leader>x", group = "Diagnostics", icon = "" },
         { "<leader>P", group = "Python", icon = "" },
+        { "<leader>m", group = "Markdown", icon = "" },
 
         -- NvChad telescope bindings with descriptions.
         { "<leader>ff", desc = "Find files" },
