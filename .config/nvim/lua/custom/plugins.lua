@@ -108,6 +108,9 @@ local plugins = {
       cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
       ft = { "markdown" },
       build = ":call mkdp#util#install()",
+      init = function()
+        vim.g.mkdp_echo_preview_url = 1
+      end,
   },
   {
     -- Render headings, tables, and code blocks in the buffer instead of a browser.
