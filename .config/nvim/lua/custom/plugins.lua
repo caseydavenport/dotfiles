@@ -110,6 +110,24 @@ local plugins = {
       build = ":call mkdp#util#install()",
       init = function()
         vim.g.mkdp_echo_preview_url = 1
+        -- A separate profile is what makes Chrome honor the geometry; an already
+        -- running one hands the URL off and ignores it.
+        _G.MkdpOpenPreview = function(url)
+          vim.system({
+            "google-chrome",
+            "--user-data-dir=" .. vim.fn.expand("~/.config/google-chrome-mdpreview"),
+            "--class=chrome-mdpreview",
+            "--app=" .. url,
+            "--window-position=2560,0",
+            "--window-size=1400,2400",
+          }, { detach = true })
+        end
+        vim.cmd([[
+          function! MkdpPreviewWindow(url) abort
+            call v:lua.MkdpOpenPreview(a:url)
+          endfunction
+        ]])
+        vim.g.mkdp_browserfunc = "MkdpPreviewWindow"
       end,
   },
   {
