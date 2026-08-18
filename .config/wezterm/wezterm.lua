@@ -87,6 +87,26 @@ config.mouse_bindings = {
     mods = 'CTRL',
     action = wezterm.action.OpenLinkAtMouseCursor,
   },
+  -- Ctrl+click for panes where the app reads the mouse itself.
+  -- Nop keeps the press from starting a selection.
+  {
+    event = { Down = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    mouse_reporting = true,
+    action = wezterm.action.Nop,
+  },
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    mouse_reporting = true,
+    action = wezterm.action.Nop,
+  },
+  {
+    event = { Up = { streak = 1, button = 'Left' } },
+    mods = 'CTRL',
+    mouse_reporting = true,
+    action = wezterm.action.OpenLinkAtMouseCursor,
+  },
   -- Ctrl+Shift+click selects and copies a whole command's output as one zone.
   -- Needs OSC 133 marks, so this only works in bare WezTerm, not through tmux.
   {
