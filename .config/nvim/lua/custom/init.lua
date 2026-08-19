@@ -218,49 +218,8 @@ vim.keymap.set("x", "<leader>ac", "<cmd>CopilotChatToggle<cr>", { desc = "Copilo
 -- Claude Code floating terminal
 ---------------------------------------------------------------
 
--- Toggle Claude Code in a floating window. Reuses the same session.
-local claude_buf = nil
-local claude_win = nil
-
-local function open_claude_float()
-  local width = math.floor(vim.o.columns * 0.85)
-  local height = math.floor(vim.o.lines * 0.85)
-  local opts = {
-    relative = "editor",
-    width = width,
-    height = height,
-    col = math.floor((vim.o.columns - width) / 2),
-    row = math.floor((vim.o.lines - height) / 2),
-    style = "minimal",
-    border = "rounded",
-  }
-
-  -- If we have a live buffer, just re-show it.
-  if claude_buf and vim.api.nvim_buf_is_valid(claude_buf) then
-    claude_win = vim.api.nvim_open_win(claude_buf, true, opts)
-    vim.cmd("startinsert")
-    return
-  end
-
-  -- Otherwise, create a new buffer and start claude.
-  claude_buf = vim.api.nvim_create_buf(false, true)
-  claude_win = vim.api.nvim_open_win(claude_buf, true, opts)
-  vim.fn.termopen("claude", {
-    on_exit = function()
-      claude_buf = nil
-      claude_win = nil
-    end,
-  })
-  vim.cmd("startinsert")
-end
-
 local function toggle_claude()
-  if claude_win and vim.api.nvim_win_is_valid(claude_win) then
-    vim.api.nvim_win_close(claude_win, false)
-    claude_win = nil
-    return
-  end
-  open_claude_float()
+  require("custom.claudeterm").toggle()
 end
 
 vim.keymap.set("n", "<leader>ai", toggle_claude, { desc = "Toggle Claude Code" })

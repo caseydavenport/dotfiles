@@ -166,6 +166,7 @@ local plugins = {
       require("custom.prreview").setup()
       require("custom.octoreview").setup()
       require("custom.aireview").setup()
+      require("custom.reviewfix").setup()
 
       require("octo").setup({
         suppress_missing_scope = {
@@ -188,6 +189,7 @@ local plugins = {
             ai_review_file = { lhs = "<leader>raf", desc = "Claude: review this file" },
             ai_review_pr = { lhs = "<leader>rap", desc = "Claude: review the whole PR" },
             ai_findings = { lhs = "<leader>ral", desc = "Claude: list findings" },
+            ai_address_comments = { lhs = "<leader>raa", desc = "Claude: address pending comments" },
             select_next_entry = { lhs = "<Tab>", desc = "next file" },
             select_prev_entry = { lhs = "<S-Tab>", desc = "prev file" },
             mark_viewed_and_next = { lhs = "<leader><space>", desc = "mark viewed, next unviewed" },
@@ -197,6 +199,7 @@ local plugins = {
             show_review_overview = { lhs = "<leader>ro", desc = "PR description and conversation" },
             show_review_threads = { lhs = "<leader>rt", desc = "threads on this line" },
             browse_file = { lhs = "<leader>rw", desc = "browse whole file at this commit" },
+            delete_comment_here = { lhs = "<leader>rD", desc = "delete comment on this line" },
             focus_files = { lhs = "<leader>rf", desc = "focus file panel" },
             toggle_files = { lhs = "<leader>rF", desc = "toggle file panel" },
             close_review_tab = { lhs = "<leader>rq", desc = "close review" },
@@ -215,6 +218,7 @@ local plugins = {
             ai_review_file = { lhs = "<leader>raf", desc = "Claude: review this file" },
             ai_review_pr = { lhs = "<leader>rap", desc = "Claude: review the whole PR" },
             ai_findings = { lhs = "<leader>ral", desc = "Claude: list findings" },
+            ai_address_comments = { lhs = "<leader>raa", desc = "Claude: address pending comments" },
             submit_review = { lhs = "<leader>rS", desc = "submit review" },
             discard_review = { lhs = "<leader>rx", desc = "discard review" },
             focus_files = { lhs = "<leader>rf", desc = "focus file panel" },
