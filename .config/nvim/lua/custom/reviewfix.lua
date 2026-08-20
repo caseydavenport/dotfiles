@@ -112,12 +112,32 @@ function M.delete_comment_here()
   if not octoreview.current_review() then
     return
   end
+  local utils = require "octo.utils"
   require("octo.reviews.thread-panel").show_review_threads(true)
-  vim.schedule(function()
-    if not pcall(vim.cmd, "Octo comment delete") then
-      require("octo.utils").error "No comment under the cursor"
+
+  local buffer = utils.get_current_buffer()
+  if not buffer then
+    utils.error "No review thread on this line"
+    return
+  end
+
+  if not buffer:get_comment_at_cursor() then
+    -- A freshly opened thread panel parks the cursor above the first comment.
+    local first
+    for line = 1, vim.api.nvim_buf_line_count(buffer.bufnr) do
+      if buffer:get_comment_at_line(line) then
+        first = line
+        break
+      end
     end
-  end)
+    if not first then
+      utils.error "No comment in this thread"
+      return
+    end
+    vim.api.nvim_win_set_cursor(0, { first, 0 })
+  end
+
+  vim.cmd "Octo comment delete"
 end
 
 ---Register the actions octo's mapping table looks up by name.

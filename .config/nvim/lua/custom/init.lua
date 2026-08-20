@@ -165,6 +165,9 @@ vim.api.nvim_create_autocmd("User", {
         { "<leader>p", group = "Git preview", icon = "" },
         { "<leader>ph", desc = "Preview hunk" },
         { "<leader>pd", desc = "Toggle deleted lines" },
+        { "<leader>pl", desc = "Toggle changed-line highlight" },
+        { "<leader>pw", desc = "Toggle word diff" },
+        { "<leader>pn", desc = "Toggle changed-line numbers" },
         { "<leader>t", group = "Test", icon = "" },
         { "<leader>tn", desc = "Test nearest" },
         { "<leader>tf", desc = "Test file" },
@@ -354,3 +357,8 @@ vim.keymap.set("n", "<leader>tv", "<cmd>TestVisit<cr>", { desc = "Test visit" })
 -- The actual <leader>td unbind happens in the LazyDone autocmd above, after
 -- gitsigns' on_attach has bound it.
 vim.keymap.set("n", "<leader>pd", function() require("gitsigns").toggle_deleted() end, { desc = "Toggle deleted lines" })
+
+-- gitsigns diffs against HEAD, so these mark everything not yet committed.
+vim.keymap.set("n", "<leader>pl", function() require("gitsigns").toggle_linehl() end, { desc = "Toggle changed-line highlight" })
+vim.keymap.set("n", "<leader>pw", function() require("gitsigns").toggle_word_diff() end, { desc = "Toggle word diff" })
+vim.keymap.set("n", "<leader>pn", function() require("gitsigns").toggle_numhl() end, { desc = "Toggle changed-line numbers" })
