@@ -73,13 +73,34 @@ config.quick_select_patterns = {
 }
 
 -- ============ mouse ============
+-- tmux redraws each visual row as its own line, so a wrapped token reaches
+-- WezTerm as several lines. Rejoin them when the selection has no spaces;
+-- anything with spaces copies unchanged.
+local function unwrap_selection(text)
+  local trimmed = text:gsub('%s+$', '')
+  if trimmed:find('[ \t]') then
+    return trimmed
+  end
+  return (trimmed:gsub('[\r\n]+', ''))
+end
+
+local copy_unwrapped = wezterm.action_callback(function(window, pane)
+  local sel = window:get_selection_text_for_pane(pane)
+  if sel and sel ~= '' then
+    window:copy_to_clipboard(unwrap_selection(sel), 'ClipboardAndPrimarySelection')
+  end
+end)
+
 -- Auto-copy on select. Finishing a drag puts the selection on both the
 -- clipboard and the X11 primary, so Ctrl+Shift+V and middle-click both work.
 config.mouse_bindings = {
   {
     event = { Up = { streak = 1, button = 'Left' } },
     mods = 'NONE',
-    action = wezterm.action.CompleteSelection 'ClipboardAndPrimarySelection',
+    action = wezterm.action.Multiple {
+      wezterm.action.CompleteSelection 'ClipboardAndPrimarySelection',
+      copy_unwrapped,
+    },
   },
   -- Ctrl+click still opens hyperlinks (override drops the default, so re-add it).
   {
@@ -115,6 +136,7 @@ config.mouse_bindings = {
     action = wezterm.action.Multiple {
       wezterm.action.SelectTextAtMouseCursor 'SemanticZone',
       wezterm.action.CompleteSelection 'ClipboardAndPrimarySelection',
+      copy_unwrapped,
     },
   },
 }
